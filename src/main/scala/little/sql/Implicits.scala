@@ -334,8 +334,8 @@ object Implicits {
      *
      * @return value from supplied function
      */
-    def forFirstRow[T](sql: String, params: Seq[Any] = Nil)(f: ResultSet => T): Option[T] =
-      withPreparedStatement(sql) { _.forFirstRow(params)(f) }
+    def mapFirstRow[T](sql: String, params: Seq[Any] = Nil)(f: ResultSet => T): Option[T] =
+      withPreparedStatement(sql) { _.mapFirstRow(params)(f) }
 
     /**
      * Creates Statement and passes it to supplied function. Statement is closed
@@ -369,7 +369,11 @@ object Implicits {
     }
   }
 
-  /** Provides extension methods to {@code java.sql.Statement}. */
+  /**
+   * Provides extension methods to {@code java.sql.Statement}.
+   *
+   * @see [[PreparedStatementType]]
+   */
   implicit class StatementType(val statement: Statement) extends AnyVal {
     /**
      * Executes SQL and passes ResultSet to supplied function.
@@ -410,22 +414,27 @@ object Implicits {
       query(sql) { _.forEachRow(f) }
 
     /**
-     * Executes SQL, invokes supplied function for first row of ResultSet, and
-     * returns value from supplied function. If statement produced empty result
-     * set, then supplied function is not invoked, and {@code None} is
-     * returned.
+     * Executes statement and invokes supplied function for first row of
+     * ResultSet.
+     *
+     * The function's return value is wrapped in {@code Some}. Or, if result set
+     * is empty, the function is not invoked and {@code None} is returned.
      *
      * @param sql SQL statement
      * @param f function
      */
-    def forFirstRow[T](sql: String)(f: ResultSet => T): Option[T] = {
+    def mapFirstRow[T](sql: String)(f: ResultSet => T): Option[T] = {
       var result: Option[T] = None
-      query(sql) { rs => result = rs.forNextRow(f) }
+      query(sql) { rs => result = rs.mapNextRow(f) }
       result
     }
   }
 
-  /** Provides extension methods to {@code java.sql.PreparedStatement}. */
+  /**
+   * Provides extension methods to {@code java.sql.PreparedStatement}.
+   *
+   * @see [[StatementType]]
+   */
   implicit class PreparedStatementType(val statement: PreparedStatement) extends AnyVal {
     /**
      * Sets parameter at index to given value.
@@ -510,15 +519,17 @@ object Implicits {
 
     /**
      * Executes statement with parameters and invokes supplied function for
-     * first row of ResultSet. If statement produced empty result set, then
-     * supplied function is not invoked, and {@code None} is returned.
+     * first row of ResultSet.
+     *
+     * The function's return value is wrapped in {@code Some}. Or, if result set
+     * is empty, the function is not invoked and {@code None} is returned.
      *
      * @param f function
      */
-    def forFirstRow[T](params: Seq[Any])(f: ResultSet => T): Option[T] = {
+    def mapFirstRow[T](params: Seq[Any])(f: ResultSet => T): Option[T] = {
       var result: Option[T] = None
 
-      query(params) { rs => result = rs.forNextRow(f) }
+      query(params) { rs => result = rs.mapNextRow(f) }
 
       result
     }
@@ -641,13 +652,15 @@ object Implicits {
         f(resultSet)
 
     /**
-     * Invokes supplied function for next row of ResultSet and returns value
-     * from function; if there are no more rows, then supplied function is not
-     * invoked and {@code None} is returned.
+     * Invokes supplied function for next row of ResultSet.
+     *
+     * The function's return value is wrapped in {@code Some}. Or, if there are
+     * no more rows in result set, the function is not invoked and {@code None}
+     * is returned.
      *
      * @param f function
      */
-    def forNextRow[T](f: ResultSet => T): Option[T] =
+    def mapNextRow[T](f: ResultSet => T): Option[T] =
       if (resultSet.next())
         Some(f(resultSet))
       else None

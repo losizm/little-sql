@@ -11,7 +11,7 @@ import scala.util.Try
  * @param url database url
  * @param user database user
  * @param password database password
- * @param driverClassName fully-qualified class name of JDBC driver
+ * @param driverClassName fully qualified class name of JDBC driver
  */
 case class Connector(url: String, user: String, password: String, driverClassName: String) {
   /** Creates and returns Connection. */

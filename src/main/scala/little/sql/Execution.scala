@@ -51,7 +51,6 @@ object Execution {
  *
  * @see [[Query]], [[Implicits.ConnectionType.execute]]
  *
- * @constructor
  * @param count update count
  */
 final case class Update(count: Int) extends Execution {
@@ -66,7 +65,6 @@ final case class Update(count: Int) extends Execution {
  *
  * @see [[Update]], [[Implicits.ConnectionType.execute]]
  *
- * @constructor
  * @param resultSet result set
  */
 final case class Query(resultSet: ResultSet) extends Execution {

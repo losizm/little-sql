@@ -47,7 +47,7 @@ class SqlSpec extends FlatSpec {
 
   it should "insert records into table with null value" in {
     conn.update("insert into prog_lang (id, name) values (?, ?)", Seq(None, "cobol"))
-    val count: Option[Int] = conn.forFirstRow("select count(*) from prog_lang where id is null") { rs =>
+    val count: Option[Int] = conn.mapFirstRow("select count(*) from prog_lang where id is null") { rs =>
       rs.get[Int](1)
     }
     assert(count.getOrElse(0) == 1)
