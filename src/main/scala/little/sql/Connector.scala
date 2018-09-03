@@ -54,4 +54,7 @@ case class Connector(url: String, user: String, password: String, driverClassNam
     try f(conn)
     finally Try(conn.close())
   }
+
+  /** Returns string representation of connector. */
+  override def toString(): String = s"Connector(url=$url,driverClassName=$driverClassName)"
 }
