@@ -28,10 +28,18 @@ compile group: 'losizm', name: 'little-sql_2.12', version: '0.2.0'
 
 Here's a taste of what **little-sql** has to offer.
 
+### Getting Connection and Executing Statements
+
+The example below illustrates obtaining a database connection using `Connector`
+and executing a sequence of arbitrary SQL statements. After executing each
+statement, an `Execution` is passed to the supplied handler. The handler will
+receive either an `Update` providing an update count or a `Query` holding a
+`ResultSet`.
+
 ```scala
-import java.sql.ResultSet
+import java.sql.{ PreparedStatement, ResultSet }
 import little.sql.{ Connector, Query, Update }
-import little.sql.Implicits.ConnectionType
+import little.sql.Implicits._ // Unleash the power
 
 case class User(id: Int, name: String)
 
@@ -40,7 +48,7 @@ def getUser(rs: ResultSet): User = {
 }
 
 // Define database connector
-val connector = Connector("jdbc:h2:~/test", "sa", "s3cret", "org.h2.Driver")
+val connector = Connector("jdbc:h2:~/test", "gza", "1iquid5w0rd5", "org.h2.Driver")
 
 // Create connection, pass it to function, and close connection when done
 connector.withConnection { conn =>
@@ -48,43 +56,174 @@ connector.withConnection { conn =>
     "drop table if exists users",
     "create table users (id int, name varchar(32))",
     "insert into users (id, name) values (0, 'root'), (500, 'guest')",
-    "select id, name from users"
+    "select id, name from users",
+    "drop table if exists passwords",
+    "create table passwords (id int, password varchar(32))",
+    "insert into passwords (id, password) values (0, 'repus'), (500, 'esuom')"
   )
 
+  // Loop thru statements executing each one
   statements.foreach { sql =>
     println(s"Executing $sql ...")
 
-    // Execute SQL, handle result, and close resources when done
+    // Execute SQL, handle result, and close statement and result set (if any)
     conn.execute(sql) {
-      // If update statement was executed, print number of rows affected
-      case Update(count) =>
-        println(s"Rows affected: $count")
+      // If update was executed, print number of rows affected
+      case Update(count) => println(s"Rows affected: $count")
 
-      // If query statement was executed, print each row of result set
-      case Query(resultSet) =>
-        while (resultSet.next())
-          println(getUser(resultSet))
+      // If query was executed, print first row of result set
+      case Query(resultSet) => if (resultSet.next()) println(getUser(resultSet))
     }
   }
 }
+```
 
+### Setting Parameters in Prepared Statement
+
+If you're executing a statement with input parameters, you can pass the SQL
+along with the parameters and allow the parameters to be set based on their
+value types.
+
+```scala
+// Get connection, run update with parameters, and print number of rows inserted
 connector.withConnection { conn =>
-  // Execute SQL using supplied parameters and return number of rows inserted
-  val count = conn.update("insert into users (id, name) values (?, ?)", Seq(-1, "nobody"))
-  println(s"Rows inserted: $count")
+  val sql = "insert into users (id, name) values (?, ?)"
+  val params = Seq(501, "ghostface")
 
-  // Execute SQL, print each user in result set, and close resources when done
-  conn.forEachRow("select id, name from users") { resultSet =>
+  val count = conn.update(sql, params)
+  println(s"Rows inserted: $count")
+}
+```
+
+### Looping thru Result Set
+
+**little-sql** adds a `forEachRow` method to `Connection`, `Statement`, and
+`PreparedStatement`, which cuts down the boilerplate of executing a query and
+looping through the `ResultSet`.
+
+```scala
+// Get connection, run select, and print each row in result set
+connector.withConnection { conn =>
+  conn.forEachRow("select * from users") { resultSet =>
     println(getUser(resultSet))
   }
 }
+```
 
+### Mapping First Row of Result Set
+
+At times, you want only the first row in a result set. Perhaps you're running
+a query knowing it will return at most one row. With pure Java, you use a
+`Connection` to create a `Statement`, you execute the statement which returns
+a `ResultSet`, and then you check the result set to see whether it has a row. If
+so, you proceed to get values from the result set. When you're done, you close
+the result set and statement.
+
+With **little-sql**, ditch the ceremony. Get straight to the point.
+
+```scala
 val user: Option[User] = connector.withConnection { conn =>
-  val sql = "select id, name from users where id = ?"
-  val params = Seq(500)
+  conn.mapFirstRow("select * from users where id = 501")(getUser)
+}
+```
 
-  // Return Some(User) if exists or None otherwise
-  conn.mapFirstRow(sql, params)(getUser)
+### Getting Custom Values from Result Set
+
+You can define an implementation of `GetValue` to retrieve custom values from a
+`ResultSet`.
+
+```scala
+import little.sql.GetValue
+
+case class Secret(text: String)
+
+// Get Secret from ResultSet
+implicit object GetSecret extends GetValue[Secret] {
+  def apply(rs: ResultSet, index: Int): Secret =
+    decrypt(rs.getString(index))
+
+  def apply(rs: ResultSet, label: String): Secret =
+    decrypt(rs.getString(label))
+
+  private def decrypt(text: String): Secret =
+    if (text == null) Secret("")
+    else Secret(text.reverse)
+}
+
+// Get connection, run select, and print each user's password
+connector.withConnection { conn =>
+  val sql = """
+    select u.name, p.password
+    from passwords p join users u
+    on p.id = u.id
+  """
+
+  conn.forEachRow(sql) { rs =>
+    val name = rs.getString("name")
+    val password = rs.get[Secret]("password")
+
+    printf("%s's password is %s%n", name, password.text)
+  }
+}
+```
+
+### Setting Custom Values in Prepared Statement
+
+You can define an implementation of `SetValue` to set custom values in a
+`PreparedStatement`.
+
+```scala
+import little.sql.SetValue
+
+// Set Secret in PreparedStatement
+implicit object SetSecret extends SetValue[Secret] {
+  def apply(stmt: PreparedStatement, index: Int, value: Secret): Unit =
+    stmt.setString(index, encrypt(value))
+
+  private def encrypt(value: Secret): String =
+    value.text.reverse
+}
+
+// Get connection, run update with parameters, and print number of rows inserted
+connector.withConnection { conn =>
+  conn.withPreparedStatement("insert into passwords (id, password) values (?, ?)") { stmt =>
+    stmt.setInt(1, 501)
+    stmt.set(2, Secret("ir0nm@n"))
+
+    val count = stmt.executeUpdate()
+    println(s"Rows inserted: $count")
+  }
+}
+```
+
+### Working with Data Source
+
+If you access to an instance of `javax.sql.DataSource`, you can use its
+extension methods for automatic resource management, similar to all `Connector`
+examples above.
+
+```scala
+import javax.naming.InitialContext
+// Adds methods to javax.sql.DataSource
+import little.sql.Implicits.DataSourceType
+
+val ctx = new InitialContext()
+val dataSource = ctx.lookup("java:module/jdbc/UserDB")
+
+// Get connection, run update with parameters, and print number of rows inserted
+dataSource.withConnection { conn =>
+  val sql = "insert into users (id, name) values (?, ?)"
+  val params = Seq(502, "raekwon")
+
+  val count = conn.update(sql, params)
+  println(s"Rows inserted: $count")
+}
+
+// Or if you need to provide user and password
+dataSource.withConnection("gza", "1iquid5w0rd5") { conn =>
+  conn.forEachRow("select name from users") { resultSet =>
+    println(resultSet.getString("name"))
+  }
 }
 ```
 
