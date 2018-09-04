@@ -30,7 +30,7 @@ Here's a taste of what **little-sql** has to offer.
 
 ### Getting Connection and Executing Statements
 
-The example below illustrates obtaining a database connection using `Connector`
+The example below demonstrates obtaining a database connection using `Connector`
 and executing a sequence of arbitrary SQL statements. After executing each
 statement, an `Execution` is passed to the supplied handler. The handler will
 receive either an `Update` providing an update count or a `Query` holding a
@@ -139,9 +139,11 @@ case class Secret(text: String)
 
 // Get Secret from ResultSet
 implicit object GetSecret extends GetValue[Secret] {
+  // Get value by index
   def apply(rs: ResultSet, index: Int): Secret =
     decrypt(rs.getString(index))
 
+  // Get value by label
   def apply(rs: ResultSet, label: String): Secret =
     decrypt(rs.getString(label))
 
@@ -198,7 +200,7 @@ connector.withConnection { conn =>
 
 ### Working with Data Source
 
-If you access to an instance of `javax.sql.DataSource`, you can use its
+If you have access to an instance of `javax.sql.DataSource`, you can use its
 extension methods for automatic resource management, similar to all `Connector`
 examples above.
 
