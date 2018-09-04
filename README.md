@@ -1,7 +1,6 @@
-# little-sql &ndash; Scala library for java.sql and javax.sql
+# little-sql
 
-**little-sql** is a Scala library that provides extension methods to _java.sql_
-and _javax.sql_.
+Scala library that provides extension methods to _java.sql_ and _javax.sql_.
 
 ## Getting Started
 
@@ -9,18 +8,18 @@ To use **little-sql**, add it as a dependency to your project:
 
 * sbt
 ```scala
-libraryDependencies += "losizm" %% "little-sql" % "0.2.0"
+libraryDependencies += "losizm" %% "little-sql" % "0.3.0"
 ```
 * Gradle
 ```groovy
-compile group: 'losizm', name: 'little-sql_2.12', version: '0.2.0'
+compile group: 'losizm', name: 'little-sql_2.12', version: '0.3.0'
 ```
 * Maven
 ```xml
 <dependency>
   <groupId>losizm</groupId>
   <artifactId>little-sql_2.12</artifactId>
-  <version>0.2.0</version>
+  <version>0.3.0</version>
 </dependency>
 ```
 
@@ -32,9 +31,9 @@ Here's a taste of what **little-sql** has to offer.
 
 The example below demonstrates obtaining a database connection using `Connector`
 and executing a sequence of arbitrary SQL statements. After executing each
-statement, an `Execution` is passed to the supplied handler. The handler will
-receive either an `Update` providing an update count or a `Query` holding a
-`ResultSet`.
+statement, a subclass of `Execution` is passed to the supplied handler. The
+handler will receive either an `Update` providing an update count or a `Query`
+holding a `ResultSet`.
 
 ```scala
 import java.sql.{ PreparedStatement, ResultSet }
