@@ -55,10 +55,10 @@ sealed abstract class Execution {
 
 /** Execution factory */
 object Execution {
-  /** Creates Update(count). */
+  /** Creates Update with specified count. */
   def apply(count: Int) = Update(count)
 
-  /** Creates Query(resultSet). */
+  /** Creates Query with supplied result set. */
   def apply(resultSet: ResultSet) = Query(resultSet)
 }
 

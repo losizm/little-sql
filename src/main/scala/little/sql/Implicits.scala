@@ -249,7 +249,9 @@ object Implicits {
    * import little.sql._
    * import Implicits._
    *
-   * Connector("jdbc:h2:~/test", "sa", "s3cr3t", "org.h2.Driver").withConnection { conn ⇒
+   * val connector = Connector("jdbc:h2:~/test", "sa", "s3cr3t", "org.h2.Driver")
+   *
+   * connector.withConnection { conn ⇒
    *   val statements = Seq(
    *     "drop table prog_lang if exists",
    *     "create table prog_lang (id int, name text)",
@@ -258,11 +260,11 @@ object Implicits {
    *   )
    *
    *   statements.foreach { sql ⇒
-   *     // Execute SQL and handle execution result accordingly.
+   *     // Execute SQL and handle execution result accordingly
    *     conn.execute(sql) {
-   *       // If update is executed print update count.
+   *       // If update is executed print update count
    *       case Update(count) ⇒ println(s"Update Count: \$count")
-   *       // If query is executed print values of each row in ResultSet.
+   *       // If query is executed print values of each row in ResultSet
    *       case Query(resultSet) ⇒
    *         while (resultSet.next())
    *           printf("id: %d, name: %s%n", resultSet.getInt("id"), resultSet.getString("name"))
@@ -324,7 +326,7 @@ object Implicits {
     }
 
     /**
-     * Executes SQL and invokes supplied function for each row of ResultSet.
+     * Executes query and invokes supplied function for each row of ResultSet.
      *
      * @param sql SQL statement
      * @param params SQL parameters
@@ -339,8 +341,8 @@ object Implicits {
       }
 
     /**
-     * Executes SQL, invokes supplied function for first row of ResultSet, and
-     * returns value from function. If statement produced empty result set, then
+     * Executes query, invokes supplied function for first row of ResultSet, and
+     * returns value from function. If query produced empty result set, then
      * supplied is not invoked, and {@code None} is returned.
      *
      * @param sql SQL statement
@@ -420,7 +422,7 @@ object Implicits {
       }
 
     /**
-     * Executes SQL and invokes supplied function for each row of ResultSet.
+     * Executes query and invokes supplied function for each row of ResultSet.
      *
      * @param sql SQL statement
      * @param f function
@@ -429,7 +431,7 @@ object Implicits {
       query(sql) { _.forEachRow(f) }
 
     /**
-     * Executes statement and invokes supplied function for first row of
+     * Executes query and invokes supplied function for first row of
      * ResultSet.
      *
      * The function's return value is wrapped in {@code Some}. Or, if result set
@@ -524,8 +526,8 @@ object Implicits {
     }
 
     /**
-     * Executes statement with parameters and invokes supplied function for each
-     * row of ResultSet.
+     * Executes query with parameters and invokes supplied function for each row
+     * of ResultSet.
      *
      * @param f function
      */
@@ -533,8 +535,8 @@ object Implicits {
       query(params) { _.forEachRow(f) }
 
     /**
-     * Executes statement with parameters and invokes supplied function for
-     * first row of ResultSet.
+     * Executes query with parameters and invokes supplied function for first
+     * row of ResultSet.
      *
      * The function's return value is wrapped in {@code Some}. Or, if result set
      * is empty, the function is not invoked and {@code None} is returned.
