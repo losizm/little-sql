@@ -22,7 +22,7 @@ import java.sql.ResultSet
  *
  * @see [[GetValueByLabel]], [[Implicits.ResultSetType]]
  */
-trait GetValueByIndex[T] extends Any {
+trait GetValueByIndex[T] {
   /** Gets value by index from ResultSet. */
   def apply(rs: ResultSet, index: Int): T
 }
@@ -32,7 +32,7 @@ trait GetValueByIndex[T] extends Any {
  *
  * @see [[GetValueByIndex]], [[Implicits.ResultSetType]]
  */
-trait GetValueByLabel[T] extends Any {
+trait GetValueByLabel[T] {
   /** Gets value by label from ResultSet. */
   def apply(rs: ResultSet, label: String): T
 }

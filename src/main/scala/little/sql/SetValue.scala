@@ -22,7 +22,7 @@ import java.sql.PreparedStatement
  *
  * @see [[Implicits.PreparedStatementType]]
  */
-trait SetValue[T] extends Any {
+trait SetValue[T] {
   /** Sets value in PreparedStatement. */
   def apply(stmt: PreparedStatement, index: Int, value: T): Unit
 }
