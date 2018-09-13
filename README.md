@@ -1,6 +1,6 @@
 # little-sql
 
-Scala library that provides extension methods to _java.sql_ and _javax.sql_.
+The Scala library that provides extension methods to _java.sql_ and _javax.sql_.
 
 [![Maven Central](https://img.shields.io/maven-central/v/com.github.losizm/little-sql_2.12.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22com.github.losizm%22%20AND%20a:%22little-sql_2.12%22)
 
