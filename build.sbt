@@ -1,5 +1,5 @@
 name := "little-sql"
-version := "0.4.0-SNAPSHOT"
+version := "0.4.0"
 organization := "com.github.losizm"
   
 scalaVersion := "2.12.6"
@@ -27,7 +27,7 @@ developers := List(
   )
 )
 
-description := "The Scala library that provides extension methods to java.sql and javax.sql"
+description := "The Scala library that provides extension methods to java.sql"
 licenses := List("Apache License, Version 2" -> url("http://www.apache.org/licenses/LICENSE-2.0.txt"))
 homepage := Some(url("https://github.com/losizm/little-sql"))
 
