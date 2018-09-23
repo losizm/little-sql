@@ -16,7 +16,7 @@
 package little.sql
 
 import org.scalatest.FlatSpec
-import java.sql.Connection
+import java.sql.{ Connection, ResultSet }
 
 import Implicits._
 
@@ -62,5 +62,35 @@ class SqlSpec extends FlatSpec {
       rs.get[Int](1)
     }
     assert(count.getOrElse(0) == 1)
+  }
+
+  it should "execute batch of commands (with multiple SQL statements)" in connector.withConnection { conn =>
+    conn.batch {
+      () => List(
+        "insert into prog_lang (id, name) values (11, 'java')",
+        "insert into prog_lang (id, name) values (12, 'groovy')",
+        "insert into prog_lang (id, name) values (13, 'scala')"
+      )
+    }
+
+    val query = "select name from prog_lang where id = ?"
+    val namer = (rs: ResultSet) => rs.getString("name")
+
+    assert(conn.mapFirstRow(query, Seq(11))(namer).contains("java"))
+    assert(conn.mapFirstRow(query, Seq(12))(namer).contains("groovy"))
+    assert(conn.mapFirstRow(query, Seq(13))(namer).contains("scala"))
+  }
+
+  it should "execute batch of commands (with multiple sets of parameters)" in connector.withConnection { conn =>
+    conn.batch("insert into prog_lang (id, name) values (?, ?)") {
+      () => List(Seq(21, "java"), Seq(22, "groovy"), Seq(23, "scala"))
+    }
+
+    val query = "select name from prog_lang where id = ?"
+    val namer = (rs: ResultSet) => rs.getString("name")
+
+    assert(conn.mapFirstRow(query, Seq(21))(namer).contains("java"))
+    assert(conn.mapFirstRow(query, Seq(22))(namer).contains("groovy"))
+    assert(conn.mapFirstRow(query, Seq(23))(namer).contains("scala"))
   }
 }

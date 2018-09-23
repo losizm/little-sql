@@ -326,6 +326,45 @@ object Implicits {
     }
 
     /**
+     * Executes batch of commands and returns results.
+     *
+     * The supplied generator must return an iterable set of SQL statements.
+     *
+     * @param generator SQL generating function
+     */
+    def batch(generator: () => Iterable[String]): Array[Int] = {
+      val stmt = connection.createStatement()
+
+      try {
+        generator().foreach(sql => stmt.addBatch(sql))
+        stmt.executeBatch()
+      } finally {
+        Try(stmt.close())
+      }
+    }
+
+    /**
+     * Executes batch of commands and returns results.
+     *
+     * The supplied generator must return an iterable set of parameter values,
+     * with each set satisfying the prepared statement as defined by
+     * {@code sql}.
+     *
+     * @param sql SQL statement from which prepared statement is created
+     * @param generator parameter generating function
+     */
+    def batch(sql: String)(generator: () => Iterable[Seq[Any]]): Array[Int] = {
+      val stmt = connection.prepareStatement(sql)
+
+      try {
+        generator().foreach(params => stmt.addBatch(params))
+        stmt.executeBatch()
+      } finally {
+        Try(stmt.close())
+      }
+    }
+
+    /**
      * Executes query and invokes supplied function for each row of ResultSet.
      *
      * @param sql SQL statement
@@ -523,6 +562,16 @@ object Implicits {
       } else {
         f(Update(statement.getUpdateCount))
       }
+    }
+
+    /**
+     * Adds parameters to batch of commands.
+     *
+     * @param params statement parameters
+     */
+    def addBatch(params: Seq[Any]): Unit = {
+      setParameters(params)
+      statement.addBatch()
     }
 
     /**
