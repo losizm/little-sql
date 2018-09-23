@@ -280,13 +280,17 @@ object Implicits {
      * @param sql SQL statement
      * @param params SQL parameters
      * @param maxRows maximum number of rows to return in result set
+     * @param fetchSize number of result set rows to fetch on each retrieval
+     *   from database
      * @param f function
      */
-    def query(sql: String, params: Seq[Any] = Nil, maxRows: Int = 0)(f: ResultSet => Unit): Unit = {
+    def query(sql: String, params: Seq[Any] = Nil, maxRows: Int = 0, fetchSize: Int = 0)(f: ResultSet => Unit): Unit = {
       val stmt = connection.prepareStatement(sql)
 
       try {
-        stmt.setMaxRows(maxRows)
+        if (maxRows > 0) stmt.setMaxRows(maxRows)
+        if (fetchSize > 0) stmt.setFetchSize(fetchSize)
+
         stmt.query(params)(f)
       } finally {
         Try(stmt.close())
@@ -312,13 +316,17 @@ object Implicits {
      * @param sql SQL statement
      * @param params SQL parameters
      * @param maxRows maximum number of rows to return in result set
+     * @param fetchSize number of result set rows to fetch on each retrieval
+     *   from database
      * @param f function
      */
-    def execute(sql: String, params: Seq[Any] = Nil, maxRows: Int = 0)(f: Execution => Unit): Unit = {
+    def execute(sql: String, params: Seq[Any] = Nil, maxRows: Int = 0, fetchSize: Int = 0)(f: Execution => Unit): Unit = {
       val stmt = connection.prepareStatement(sql)
 
       try {
-        stmt.setMaxRows(maxRows)
+        if (maxRows > 0) stmt.setMaxRows(maxRows)
+        if (fetchSize > 0) stmt.setFetchSize(fetchSize)
+
         stmt.execute(params)(f)
       } finally {
         Try(stmt.close())
@@ -370,14 +378,12 @@ object Implicits {
      * @param sql SQL statement
      * @param params SQL parameters
      * @param maxRows maximum number of rows to return in result set
-     * @param fetchSize number of rows to fetch on each retrieval from result set
+     * @param fetchSize number of result set rows to fetch on each retrieval
+     *   from database
      * @param f function
      */
     def forEachRow(sql: String, params: Seq[Any] = Nil, maxRows: Int = 0, fetchSize: Int = 0)(f: ResultSet => Unit): Unit =
-      query(sql, params, maxRows) { rs =>
-        rs.setFetchSize(fetchSize)
-        rs.forEachRow(f)
-      }
+      query(sql, params, maxRows, fetchSize) { _.forEachRow(f) }
 
     /**
      * Executes query, invokes supplied function for first row of ResultSet, and
@@ -594,9 +600,7 @@ object Implicits {
      */
     def mapFirstRow[T](params: Seq[Any])(f: ResultSet => T): Option[T] = {
       var result: Option[T] = None
-
       query(params) { rs => result = rs.mapNextRow(f) }
-
       result
     }
 
