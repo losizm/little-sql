@@ -20,6 +20,7 @@ import java.time.{ LocalDate, LocalDateTime, LocalTime }
 
 import javax.sql.DataSource
 
+import scala.collection.mutable.ArrayBuffer
 import scala.language.higherKinds
 import scala.util.Try
 
@@ -275,10 +276,10 @@ object Implicits {
    */
   implicit class ConnectionType(val connection: Connection) extends AnyVal {
     /**
-     * Executes SQL and passes ResultSet to supplied function.
+     * Executes query and passes ResultSet to supplied function.
      *
-     * @param sql SQL statement
-     * @param params SQL parameters
+     * @param sql SQL query
+     * @param params parameters
      * @param maxRows maximum number of rows to return in result set
      * @param fetchSize number of result set rows to fetch on each retrieval
      *   from database
@@ -298,10 +299,10 @@ object Implicits {
     }
 
     /**
-     * Executes SQL and returns update count.
+     * Executes update and returns update count.
      *
-     * @param sql SQL statement
-     * @param params SQL parameters
+     * @param sql SQL update
+     * @param params parameters
      */
     def update(sql: String, params: Seq[Any] = Nil): Int = {
       val stmt = connection.prepareStatement(sql)
@@ -313,8 +314,8 @@ object Implicits {
     /**
      * Executes SQL and passes Execution to supplied function.
      *
-     * @param sql SQL statement
-     * @param params SQL parameters
+     * @param sql SQL
+     * @param params parameters
      * @param maxRows maximum number of rows to return in result set
      * @param fetchSize number of result set rows to fetch on each retrieval
      *   from database
@@ -338,7 +339,7 @@ object Implicits {
      *
      * The supplied generator must return an iterable set of SQL statements.
      *
-     * @param generator SQL generating function
+     * @param generator SQL generator
      */
     def batch(generator: () => Iterable[String]): Array[Int] = {
       val stmt = connection.createStatement()
@@ -355,11 +356,10 @@ object Implicits {
      * Executes batch of commands and returns results.
      *
      * The supplied generator must return an iterable set of parameter values,
-     * with each set satisfying the prepared statement as defined by
-     * {@code sql}.
+     * with each set satisfying prepared statement as defined by {@code sql}.
      *
-     * @param sql SQL statement from which prepared statement is created
-     * @param generator parameter generating function
+     * @param sql SQL from which prepared statement is created
+     * @param generator parameter generator
      */
     def batch(sql: String)(generator: () => Iterable[Seq[Any]]): Array[Int] = {
       val stmt = connection.prepareStatement(sql)
@@ -375,8 +375,8 @@ object Implicits {
     /**
      * Executes query and invokes supplied function for each row of ResultSet.
      *
-     * @param sql SQL statement
-     * @param params SQL parameters
+     * @param sql SQL query
+     * @param params parameters
      * @param maxRows maximum number of rows to return in result set
      * @param fetchSize number of result set rows to fetch on each retrieval
      *   from database
@@ -386,12 +386,36 @@ object Implicits {
       query(sql, params, maxRows, fetchSize) { _.forEachRow(f) }
 
     /**
-     * Executes query, invokes supplied function for first row of ResultSet, and
-     * returns value from function. If query produced empty result set, then
-     * supplied is not invoked, and {@code None} is returned.
+     * Executes query and maps each row of ResultSet using supplied function.
      *
-     * @param sql SQL statement
-     * @param params SQL parameters
+     * @param sql SQL query
+     * @param params parameters
+     * @param maxRows maximum number of rows to return in result set
+     * @param fetchSize number of result set rows to fetch on each retrieval
+     *   from database
+     * @param f map function
+     */
+    def mapEachRow[T](sql: String, params: Seq[Any] = Nil, maxRows: Int = 0, fetchSize: Int = 0)(f: ResultSet => T): Seq[T] = {
+      val stmt = connection.prepareStatement(sql)
+
+      try {
+        if (maxRows > 0) stmt.setMaxRows(maxRows)
+        if (fetchSize > 0) stmt.setFetchSize(fetchSize)
+
+        stmt.mapEachRow(params)(f)
+      } finally {
+        Try(stmt.close())
+      }
+    }
+
+    /**
+     * Executes query and maps first row of ResultSet using supplied function.
+     *
+     * The function's return value is wrapped in {@code Some}. Or, if result set
+     * is empty, the function is not invoked and {@code None} is returned.
+     *
+     * @param sql SQL query
+     * @param params parameters
      * @param f function
      *
      * @return value from supplied function
@@ -438,9 +462,9 @@ object Implicits {
    */
   implicit class StatementType(val statement: Statement) extends AnyVal {
     /**
-     * Executes SQL and passes ResultSet to supplied function.
+     * Executes query  and passes ResultSet to supplied function.
      *
-     * @param sql SQL statement
+     * @param sql SQL query
      * @param f function
      */
     def query(sql: String)(f: ResultSet => Unit): Unit = {
@@ -469,20 +493,32 @@ object Implicits {
     /**
      * Executes query and invokes supplied function for each row of ResultSet.
      *
-     * @param sql SQL statement
+     * @param sql SQL query
      * @param f function
      */
     def forEachRow(sql: String)(f: ResultSet => Unit): Unit =
       query(sql) { _.forEachRow(f) }
 
     /**
-     * Executes query and invokes supplied function for first row of
-     * ResultSet.
+     * Executes query and maps each row of ResultSet using supplied function.
+     *
+     * @param sql SQL query
+     * @param params parameters
+     * @param f map function
+     */
+    def mapEachRow(sql: String)(f: ResultSet => Unit): Unit = {
+      val rs = statement.executeQuery(sql)
+      try rs.mapEachRow(f)
+      finally Try(rs.close())
+    }
+
+    /**
+     * Executes query and maps first row of ResultSet using supplied function.
      *
      * The function's return value is wrapped in {@code Some}. Or, if result set
      * is empty, the function is not invoked and {@code None} is returned.
      *
-     * @param sql SQL statement
+     * @param sql SQL query
      * @param f function
      */
     def mapFirstRow[T](sql: String)(f: ResultSet => T): Option[T] = {
@@ -525,10 +561,9 @@ object Implicits {
       setValue(statement, index, value)
 
     /**
-     * Executes statement with parameters and passes ResultSet to supplied
-     * function.
+     * Executes query with parameters and passes ResultSet to supplied function.
      *
-     * @param params statment parameters
+     * @param params parameters
      * @param f function
      */
     def query(params: Seq[Any])(f: ResultSet => Unit): Unit = {
@@ -541,9 +576,9 @@ object Implicits {
     }
 
     /**
-     * Executes statement with parameters and returns update count.
+     * Executes update with parameters and returns update count.
      *
-     * @param params statement parameters
+     * @param params parameters
      */
     def update(params: Seq[Any]): Int = {
       setParameters(params)
@@ -554,7 +589,7 @@ object Implicits {
      * Executes statement with parameters and passes Execution to supplied
      * function.
      *
-     * @param params statement parameters
+     * @param params parameters
      * @param f function
      */
     def execute(params: Seq[Any])(f: Execution => Unit): Unit = {
@@ -573,7 +608,7 @@ object Implicits {
     /**
      * Adds parameters to batch of commands.
      *
-     * @param params statement parameters
+     * @param params parameters
      */
     def addBatch(params: Seq[Any]): Unit = {
       setParameters(params)
@@ -584,19 +619,35 @@ object Implicits {
      * Executes query with parameters and invokes supplied function for each row
      * of ResultSet.
      *
+     * @param params parameters
      * @param f function
      */
     def forEachRow(params: Seq[Any])(f: ResultSet => Unit): Unit =
       query(params) { _.forEachRow(f) }
 
     /**
-     * Executes query with parameters and invokes supplied function for first
-     * row of ResultSet.
+     * Executes query with parameters and maps each row of ResultSet using
+     * supplied function.
+     *
+     * @param params parameters
+     * @param f map function
+     */
+    def mapEachRow[T](params: Seq[Any])(f: ResultSet => T): Seq[T] = {
+      setParameters(params)
+      val rs = statement.executeQuery()
+      try rs.mapEachRow(f)
+      finally Try(rs.close())
+    }
+
+    /**
+     * Executes query with parameters and maps first row of ResultSet using
+     * supplied function.
      *
      * The function's return value is wrapped in {@code Some}. Or, if result set
      * is empty, the function is not invoked and {@code None} is returned.
      *
-     * @param f function
+     * @param params parameters
+     * @param f map function
      */
     def mapFirstRow[T](params: Seq[Any])(f: ResultSet => T): Option[T] = {
       var result: Option[T] = None
@@ -660,7 +711,6 @@ object Implicits {
       params.zipWithIndex.foreach {
         case (value, index) => setParameter(index + 1, value)
       }
-
   }
 
   /** Provides extension methods to {@code java.sql.ResultSet}. */
@@ -712,8 +762,7 @@ object Implicits {
     def getLocalDateTime(label: String): LocalDateTime = GetLocalDateTime(resultSet, label)
 
     /**
-     * Invokes supplied function for each row of ResultSet after first advancing
-     * to next row.
+     * Invokes supplied function for next each row of ResultSet.
      *
      * @param f function
      */
@@ -722,13 +771,26 @@ object Implicits {
         f(resultSet)
 
     /**
-     * Invokes supplied function for next row of ResultSet.
+     * Maps next row and all subsequent rows of ResultSet using supplied
+     * function.
+     *
+     * @param f map function
+     */
+    def mapEachRow[T](f: ResultSet => T): Seq[T] = {
+      val buffer = new ArrayBuffer[T]
+      while (resultSet.next())
+        buffer += f(resultSet)
+      buffer
+    }
+
+    /**
+     * Maps next row of ResultSet using supplied function.
      *
      * The function's return value is wrapped in {@code Some}. Or, if there are
      * no more rows in result set, the function is not invoked and {@code None}
      * is returned.
      *
-     * @param f function
+     * @param f map function
      */
     def mapNextRow[T](f: ResultSet => T): Option[T] =
       if (resultSet.next())

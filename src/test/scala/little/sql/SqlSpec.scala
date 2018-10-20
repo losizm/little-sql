@@ -93,4 +93,12 @@ class SqlSpec extends FlatSpec {
     assert(conn.mapFirstRow(query, Seq(22))(namer).contains("groovy"))
     assert(conn.mapFirstRow(query, Seq(23))(namer).contains("scala"))
   }
+
+  it should "map rows" in connector.withConnection { conn =>
+    val entries = conn.mapEachRow("select id, name from prog_lang where id in (21, 22, 23) order by id") { rs =>
+      rs.getInt("id") -> rs.getString("name")
+    }
+
+    assert(entries == Seq(21 -> "java", 22 -> "groovy", 23 -> "scala"))
+  }
 }
