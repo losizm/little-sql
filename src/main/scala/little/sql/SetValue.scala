@@ -20,7 +20,7 @@ import java.sql.PreparedStatement
 /**
  * Sets value in PreparedStatement.
  *
- * @see [[Implicits.PreparedStatementType]]
+ * @see [[Implicits.PreparedStatementType PreparedStatementType]]
  */
 trait SetValue[T] {
   /** Sets value in PreparedStatement. */

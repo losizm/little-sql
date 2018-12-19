@@ -22,8 +22,9 @@ import java.sql.ResultSet
  * obtained via {@code count}; otherwise, if query, result can be obtained via
  * {@code resultSet}.
  *
- * @see [[Implicits.ConnectionType.execute]], [[Implicits.StatementType.execute]],
- *      [[Implicits.PreparedStatementType.execute]]
+ * @see [[Implicits.ConnectionType.execute ConnectionType.execute]],
+ *  [[Implicits.StatementType.execute StatementType.execute]],
+ *  [[Implicits.PreparedStatementType.execute PreparedStatementType.execute]]
  */
 sealed abstract class Execution {
   /**
@@ -65,8 +66,9 @@ object Execution {
 /**
  * Represents result of update.
  *
- * @see [[Query]], [[Implicits.ConnectionType.execute]], [[Implicits.StatementType.execute]],
- *      [[Implicits.PreparedStatementType.execute]]
+ * @see [[Query]], [[Implicits.ConnectionType.execute ConnectionType.execute]],
+ *  [[Implicits.StatementType.execute StatementType.execute]],
+ *  [[Implicits.PreparedStatementType.execute PreparedStatementType.execute]]
  *
  * @param count update count
  */
@@ -80,8 +82,9 @@ final case class Update(count: Int) extends Execution {
 /**
  * Represents result of query.
  *
- * @see [[Update]], [[Implicits.ConnectionType.execute]], [[Implicits.StatementType.execute]],
- *      [[Implicits.PreparedStatementType.execute]]
+ * @see [[Update]], [[Implicits.ConnectionType.execute ConnectionType.execute]],
+ *  [[Implicits.StatementType.execute StatementType.execute]],
+ *  [[Implicits.PreparedStatementType.execute PreparedStatementType.execute]]
  *
  * @param resultSet result set
  */
