@@ -10,18 +10,18 @@ To use **little-sql**, add it as a dependency to your project:
 
 * sbt
 ```scala
-libraryDependencies += "com.github.losizm" %% "little-sql" % "0.4.2"
+libraryDependencies += "com.github.losizm" %% "little-sql" % "0.4.3"
 ```
 * Gradle
 ```groovy
-compile group: 'com.github.losizm', name: 'little-sql_2.12', version: '0.4.2'
+compile group: 'com.github.losizm', name: 'little-sql_2.12', version: '0.4.3'
 ```
 * Maven
 ```xml
 <dependency>
   <groupId>com.github.losizm</groupId>
   <artifactId>little-sql_2.12</artifactId>
-  <version>0.4.2</version>
+  <version>0.4.3</version>
 </dependency>
 ```
 
@@ -229,6 +229,11 @@ dataSource.withConnection("gza", "1iquid5w0rd5") { conn =>
   }
 }
 ```
+
+## API Documentation
+
+See [scaladoc](https://losizm.github.io/little-sql/latest/api/little/sql/index.html)
+for additional details.
 
 ## License
 **little-sql** is licensed under the Apache License, Version 2. See LICENSE file
