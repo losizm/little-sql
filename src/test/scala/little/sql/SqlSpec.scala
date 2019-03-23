@@ -37,7 +37,7 @@ class SqlSpec extends FlatSpec {
   }
 
   it should "select records from table" in connector.withConnection { conn =>
-    conn.forEachRow("select * from prog_lang") { rs =>
+    conn.foreach("select * from prog_lang") { rs =>
       val id = rs.get[Int]("id")
       val name = rs.get[String]("name")
       val comments = rs.get[String]("comments")
@@ -45,7 +45,7 @@ class SqlSpec extends FlatSpec {
   }
 
   it should "select record having one column with null value" in connector.withConnection { conn =>
-    conn.forEachRow("select * from prog_lang") { rs =>
+    conn.foreach("select * from prog_lang") { rs =>
       val id = rs.get[Option[Int]]("id")
       val name = rs.get[Option[String]]("name")
       val comments = rs.get[Option[String]]("comments")
@@ -58,7 +58,7 @@ class SqlSpec extends FlatSpec {
 
   it should "insert records into table with null value" in connector.withConnection { conn =>
     conn.update("insert into prog_lang (id, name) values (?, ?)", Seq(None, "cobol"))
-    val count: Option[Int] = conn.mapFirstRow("select count(*) from prog_lang where id is null") { rs =>
+    val count: Option[Int] = conn.mapFirst("select count(*) from prog_lang where id is null") { rs =>
       rs.get[Int](1)
     }
     assert(count.getOrElse(0) == 1)
@@ -76,9 +76,9 @@ class SqlSpec extends FlatSpec {
     val query = "select name from prog_lang where id = ?"
     val namer = (rs: ResultSet) => rs.getString("name")
 
-    assert(conn.mapFirstRow(query, Seq(11))(namer).contains("java"))
-    assert(conn.mapFirstRow(query, Seq(12))(namer).contains("groovy"))
-    assert(conn.mapFirstRow(query, Seq(13))(namer).contains("scala"))
+    assert(conn.mapFirst(query, Seq(11))(namer).contains("java"))
+    assert(conn.mapFirst(query, Seq(12))(namer).contains("groovy"))
+    assert(conn.mapFirst(query, Seq(13))(namer).contains("scala"))
   }
 
   it should "execute batch of commands (with multiple sets of parameters)" in connector.withConnection { conn =>
@@ -89,13 +89,13 @@ class SqlSpec extends FlatSpec {
     val query = "select name from prog_lang where id = ?"
     val namer = (rs: ResultSet) => rs.getString("name")
 
-    assert(conn.mapFirstRow(query, Seq(21))(namer).contains("java"))
-    assert(conn.mapFirstRow(query, Seq(22))(namer).contains("groovy"))
-    assert(conn.mapFirstRow(query, Seq(23))(namer).contains("scala"))
+    assert(conn.mapFirst(query, Seq(21))(namer).contains("java"))
+    assert(conn.mapFirst(query, Seq(22))(namer).contains("groovy"))
+    assert(conn.mapFirst(query, Seq(23))(namer).contains("scala"))
   }
 
   it should "map rows" in connector.withConnection { conn =>
-    val entries = conn.mapEachRow("select id, name from prog_lang where id in (21, 22, 23) order by id") { rs =>
+    val entries = conn.map("select id, name from prog_lang where id in (21, 22, 23) order by id") { rs =>
       rs.getInt("id") -> rs.getString("name")
     }
 

@@ -382,8 +382,8 @@ object Implicits {
      *   from database
      * @param f function
      */
-    def forEachRow(sql: String, params: Seq[Any] = Nil, maxRows: Int = 0, fetchSize: Int = 0)(f: ResultSet => Unit): Unit =
-      query(sql, params, maxRows, fetchSize) { _.forEachRow(f) }
+    def foreach(sql: String, params: Seq[Any] = Nil, maxRows: Int = 0, fetchSize: Int = 0)(f: ResultSet => Unit): Unit =
+      query(sql, params, maxRows, fetchSize) { _.foreach(f) }
 
     /**
      * Executes query and maps each row of ResultSet using supplied function.
@@ -395,14 +395,14 @@ object Implicits {
      *   from database
      * @param f map function
      */
-    def mapEachRow[T](sql: String, params: Seq[Any] = Nil, maxRows: Int = 0, fetchSize: Int = 0)(f: ResultSet => T): Seq[T] = {
+    def map[T](sql: String, params: Seq[Any] = Nil, maxRows: Int = 0, fetchSize: Int = 0)(f: ResultSet => T): Seq[T] = {
       val stmt = connection.prepareStatement(sql)
 
       try {
         if (maxRows > 0) stmt.setMaxRows(maxRows)
         if (fetchSize > 0) stmt.setFetchSize(fetchSize)
 
-        stmt.mapEachRow(params)(f)
+        stmt.map(params)(f)
       } finally {
         Try(stmt.close())
       }
@@ -420,8 +420,8 @@ object Implicits {
      *
      * @return value from supplied function
      */
-    def mapFirstRow[T](sql: String, params: Seq[Any] = Nil)(f: ResultSet => T): Option[T] =
-      withPreparedStatement(sql) { _.mapFirstRow(params)(f) }
+    def mapFirst[T](sql: String, params: Seq[Any] = Nil)(f: ResultSet => T): Option[T] =
+      withPreparedStatement(sql) { _.mapFirst(params)(f) }
 
     /**
      * Creates Statement and passes it to supplied function. Statement is closed
@@ -496,8 +496,8 @@ object Implicits {
      * @param sql SQL query
      * @param f function
      */
-    def forEachRow(sql: String)(f: ResultSet => Unit): Unit =
-      query(sql) { _.forEachRow(f) }
+    def foreach(sql: String)(f: ResultSet => Unit): Unit =
+      query(sql) { _.foreach(f) }
 
     /**
      * Executes query and maps each row of ResultSet using supplied function.
@@ -506,9 +506,9 @@ object Implicits {
      * @param params parameters
      * @param f map function
      */
-    def mapEachRow(sql: String)(f: ResultSet => Unit): Unit = {
+    def map(sql: String)(f: ResultSet => Unit): Unit = {
       val rs = statement.executeQuery(sql)
-      try rs.mapEachRow(f)
+      try rs.map(f)
       finally Try(rs.close())
     }
 
@@ -521,9 +521,9 @@ object Implicits {
      * @param sql SQL query
      * @param f function
      */
-    def mapFirstRow[T](sql: String)(f: ResultSet => T): Option[T] = {
+    def mapFirst[T](sql: String)(f: ResultSet => T): Option[T] = {
       var result: Option[T] = None
-      query(sql) { rs => result = rs.mapNextRow(f) }
+      query(sql) { rs => result = rs.mapNext(f) }
       result
     }
   }
@@ -622,8 +622,8 @@ object Implicits {
      * @param params parameters
      * @param f function
      */
-    def forEachRow(params: Seq[Any])(f: ResultSet => Unit): Unit =
-      query(params) { _.forEachRow(f) }
+    def foreach(params: Seq[Any])(f: ResultSet => Unit): Unit =
+      query(params) { _.foreach(f) }
 
     /**
      * Executes query with parameters and maps each row of ResultSet using
@@ -632,10 +632,10 @@ object Implicits {
      * @param params parameters
      * @param f map function
      */
-    def mapEachRow[T](params: Seq[Any])(f: ResultSet => T): Seq[T] = {
+    def map[T](params: Seq[Any])(f: ResultSet => T): Seq[T] = {
       setParameters(params)
       val rs = statement.executeQuery()
-      try rs.mapEachRow(f)
+      try rs.map(f)
       finally Try(rs.close())
     }
 
@@ -649,9 +649,9 @@ object Implicits {
      * @param params parameters
      * @param f map function
      */
-    def mapFirstRow[T](params: Seq[Any])(f: ResultSet => T): Option[T] = {
+    def mapFirst[T](params: Seq[Any])(f: ResultSet => T): Option[T] = {
       var result: Option[T] = None
-      query(params) { rs => result = rs.mapNextRow(f) }
+      query(params) { rs => result = rs.mapNext(f) }
       result
     }
 
@@ -766,7 +766,7 @@ object Implicits {
      *
      * @param f function
      */
-    def forEachRow(f: ResultSet => Unit): Unit =
+    def foreach(f: ResultSet => Unit): Unit =
       while (resultSet.next())
         f(resultSet)
 
@@ -776,7 +776,7 @@ object Implicits {
      *
      * @param f map function
      */
-    def mapEachRow[T](f: ResultSet => T): Seq[T] = {
+    def map[T](f: ResultSet => T): Seq[T] = {
       val buffer = new ArrayBuffer[T]
       while (resultSet.next())
         buffer += f(resultSet)
@@ -792,7 +792,7 @@ object Implicits {
      *
      * @param f map function
      */
-    def mapNextRow[T](f: ResultSet => T): Option[T] =
+    def mapNext[T](f: ResultSet => T): Option[T] =
       if (resultSet.next())
         Some(f(resultSet))
       else None
