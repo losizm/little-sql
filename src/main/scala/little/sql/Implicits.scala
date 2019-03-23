@@ -20,6 +20,7 @@ import java.time.{ LocalDate, LocalDateTime, LocalTime }
 
 import javax.sql.DataSource
 
+import scala.collection.GenTraversableOnce
 import scala.collection.mutable.ArrayBuffer
 import scala.language.higherKinds
 import scala.util.Try
@@ -395,18 +396,8 @@ object Implicits {
      *   from database
      * @param f map function
      */
-    def map[T](sql: String, params: Seq[Any] = Nil, maxRows: Int = 0, fetchSize: Int = 0)(f: ResultSet => T): Seq[T] = {
-      val stmt = connection.prepareStatement(sql)
-
-      try {
-        if (maxRows > 0) stmt.setMaxRows(maxRows)
-        if (fetchSize > 0) stmt.setFetchSize(fetchSize)
-
-        stmt.map(params)(f)
-      } finally {
-        Try(stmt.close())
-      }
-    }
+    def map[T](sql: String, params: Seq[Any] = Nil, maxRows: Int = 0, fetchSize: Int = 0)(f: ResultSet => T): Seq[T] =
+      fold(sql, params, maxRows, fetchSize)(new ArrayBuffer[T]) { _ += f(_) }
 
     /**
      * Executes query and maps first row of ResultSet using supplied function.
@@ -422,6 +413,48 @@ object Implicits {
      */
     def mapFirst[T](sql: String, params: Seq[Any] = Nil)(f: ResultSet => T): Option[T] =
       withPreparedStatement(sql) { _.mapFirst(params)(f) }
+
+    /**
+     * Executes query and maps each row of ResultSet building a collection using
+     * elements returned map function.
+     *
+     * @param sql SQL query
+     * @param params parameters
+     * @param maxRows maximum number of rows to return in result set
+     * @param fetchSize number of result set rows to fetch on each retrieval
+     *   from database
+     * @param f map function
+     */
+    def flatMap[T](sql: String, params: Seq[Any] = Nil, maxRows: Int = 0, fetchSize: Int = 0)(f: ResultSet => GenTraversableOnce[T]): Seq[T] =
+      fold(sql, params, maxRows, fetchSize)(new ArrayBuffer[T]) { (buf, rs) =>
+        f(rs).foreach(buf.+=)
+        buf
+      }
+
+    /**
+     * Executes query and folds ResultSet to single value using given start
+     * value and binary operator.
+     *
+     * @param sql SQL query
+     * @param params parameters
+     * @param maxRows maximum number of rows to return in result set
+     * @param fetchSize number of result set rows to fetch on each retrieval
+     *   from database
+     * @param z start value
+     * @param op binary operator
+     */
+    def fold[T](sql: String, params: Seq[Any] = Nil, maxRows: Int = 0, fetchSize: Int = 0)(z: T)(op: (T, ResultSet) => T): T = {
+      val stmt = connection.prepareStatement(sql)
+
+      try {
+        if (maxRows > 0) stmt.setMaxRows(maxRows)
+        if (fetchSize > 0) stmt.setFetchSize(fetchSize)
+
+        stmt.fold(params)(z)(op)
+      } finally {
+        Try(stmt.close())
+      }
+    }
 
     /**
      * Creates Statement and passes it to supplied function. Statement is closed
@@ -506,11 +539,8 @@ object Implicits {
      * @param params parameters
      * @param f map function
      */
-    def map(sql: String)(f: ResultSet => Unit): Unit = {
-      val rs = statement.executeQuery(sql)
-      try rs.map(f)
-      finally Try(rs.close())
-    }
+    def map[T](sql: String)(f: ResultSet => T): Seq[T] =
+      fold(sql)(new ArrayBuffer[T]) { _ += f(_) }
 
     /**
      * Executes query and maps first row of ResultSet using supplied function.
@@ -525,6 +555,35 @@ object Implicits {
       var result: Option[T] = None
       query(sql) { rs => result = rs.mapNext(f) }
       result
+    }
+
+    /**
+     * Executes query and maps each row of ResultSet building a collection
+     * using elements returned from map function.
+     *
+     * @param sql SQL query
+     * @param params parameters
+     * @param f map function
+     */
+    def flatMap[T](sql: String)(f: ResultSet => GenTraversableOnce[T]): Seq[T] =
+      fold(sql)(new ArrayBuffer[T]) { (buf, rs) =>
+        f(rs).foreach(buf.+=)
+        buf
+      }
+
+    /**
+     * Executes query and folds ResultSet to single value using given start
+     * value and binary operator.
+     *
+     * @param sql SQL query
+     * @param params parameters
+     * @param z start value
+     * @param op binary operator
+     */
+    def fold[T](sql: String)(z: T)(op: (T, ResultSet) => T): T = {
+      val rs = statement.executeQuery(sql)
+      try rs.fold(z)(op)
+      finally Try(rs.close())
     }
   }
 
@@ -632,12 +691,8 @@ object Implicits {
      * @param params parameters
      * @param f map function
      */
-    def map[T](params: Seq[Any])(f: ResultSet => T): Seq[T] = {
-      setParameters(params)
-      val rs = statement.executeQuery()
-      try rs.map(f)
-      finally Try(rs.close())
-    }
+    def map[T](params: Seq[Any])(f: ResultSet => T): Seq[T] =
+      fold(params)(new ArrayBuffer[T]) {_ += f(_) }
 
     /**
      * Executes query with parameters and maps first row of ResultSet using
@@ -653,6 +708,34 @@ object Implicits {
       var result: Option[T] = None
       query(params) { rs => result = rs.mapNext(f) }
       result
+    }
+
+    /**
+     * Executes query with parameters and maps each row of ResultSet building a
+     * collection using elements returned from map function.
+     *
+     * @param params parameters
+     * @param f map function
+     */
+    def flatMap[T](params: Seq[Any])(f: ResultSet => GenTraversableOnce[T]): Seq[T] =
+      fold(params)(new ArrayBuffer[T]) { (buf, rs) =>
+        f(rs).foreach(buf.+=)
+        buf
+      }
+
+    /**
+     * Executes query with parameters and folds ResultSet to single value using
+     * given start value and binary operator.
+     *
+     * @param params parameters
+     * @param z start value
+     * @param op binary operator
+     */
+    def fold[T](params: Seq[Any])(z: T)(op: (T, ResultSet) => T): T = {
+      setParameters(params)
+      val rs = statement.executeQuery()
+      try rs.fold(z)(op)
+      finally Try(rs.close())
     }
 
     /**
@@ -776,12 +859,8 @@ object Implicits {
      *
      * @param f map function
      */
-    def map[T](f: ResultSet => T): Seq[T] = {
-      val buffer = new ArrayBuffer[T]
-      while (resultSet.next())
-        buffer += f(resultSet)
-      buffer
-    }
+    def map[T](f: ResultSet => T): Seq[T] =
+      fold(new ArrayBuffer[T]) { _ += f(_) }
 
     /**
      * Maps next row of ResultSet using supplied function.
@@ -796,5 +875,31 @@ object Implicits {
       if (resultSet.next())
         Some(f(resultSet))
       else None
+
+    /**
+     * Maps next row and all subsequent rows of ResultSet building a collection
+     * using elements returned map function.
+     *
+     * @param f map function
+     */
+    def flatMap[T](f: ResultSet => GenTraversableOnce[T]): Seq[T] =
+      fold(new ArrayBuffer[T]) { (buf, rs) =>
+        f(rs).foreach(buf.+=)
+        buf
+      }
+
+    /**
+     * Folds ResultSet to single value using given start value and binary
+     * operator.
+     *
+     * @param z start value
+     * @param op binary operator
+     */
+    def fold[T](z: T)(op: (T, ResultSet) => T): T = {
+      var res = z
+      while (resultSet.next())
+        res = op(res, resultSet)
+      res
+    }
   }
 }
