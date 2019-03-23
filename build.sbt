@@ -1,5 +1,5 @@
 name := "little-sql"
-version := "0.4.3"
+version := "0.5.0"
 organization := "com.github.losizm"
   
 scalaVersion := "2.12.8"
@@ -40,3 +40,4 @@ publishTo := {
 }
 
 publishMavenStyle := true
+

@@ -10,18 +10,18 @@ To use **little-sql**, add it as a dependency to your project:
 
 * sbt
 ```scala
-libraryDependencies += "com.github.losizm" %% "little-sql" % "0.4.3"
+libraryDependencies += "com.github.losizm" %% "little-sql" % "0.5.0"
 ```
 * Gradle
 ```groovy
-compile group: 'com.github.losizm', name: 'little-sql_2.12', version: '0.4.3'
+compile group: 'com.github.losizm', name: 'little-sql_2.12', version: '0.5.0'
 ```
 * Maven
 ```xml
 <dependency>
   <groupId>com.github.losizm</groupId>
   <artifactId>little-sql_2.12</artifactId>
-  <version>0.4.3</version>
+  <version>0.5.0</version>
 </dependency>
 ```
 
@@ -98,15 +98,15 @@ connector.withConnection { conn =>
 
 ### Looping thru Result Set
 
-**little-sql** adds a `forEachRow` method to `Connection`, `Statement`, and
+**little-sql** adds a `foreach` method to `Connection`, `Statement`, and
 `PreparedStatement`, which cuts down the boilerplate of executing a query and
 looping through the `ResultSet`.
 
 ```scala
 // Get connection, run select, and print each row in result set
 connector.withConnection { conn =>
-  conn.forEachRow("select * from users") { resultSet =>
-    println(getUser(resultSet))
+  conn.foreach("select * from users") { rs =>
+    println(getUser(rs))
   }
 }
 ```
@@ -124,7 +124,7 @@ With **little-sql**, ditch the ceremony. Get straight to the point.
 
 ```scala
 val user: Option[User] = connector.withConnection { conn =>
-  conn.mapFirstRow("select * from users where id = 501")(getUser)
+  conn.first("select * from users where id = 501")(getUser)
 }
 ```
 
@@ -161,7 +161,7 @@ connector.withConnection { conn =>
     on p.id = u.id
   """
 
-  conn.forEachRow(sql) { rs =>
+  conn.foreach(sql) { rs =>
     val name = rs.getString("name")
     val password = rs.get[Secret]("password")
 
@@ -224,8 +224,8 @@ dataSource.withConnection { conn =>
 
 // Or if you need to provide user and password
 dataSource.withConnection("gza", "1iquid5w0rd5") { conn =>
-  conn.forEachRow("select name from users") { resultSet =>
-    println(resultSet.getString("name"))
+  conn.foreach("select name from users") { rs =>
+    println(rs.getString("name"))
   }
 }
 ```
@@ -238,3 +238,4 @@ for additional details.
 ## License
 **little-sql** is licensed under the Apache License, Version 2. See LICENSE file
 for more information.
+
