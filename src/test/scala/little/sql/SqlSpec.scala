@@ -58,7 +58,7 @@ class SqlSpec extends FlatSpec {
 
   it should "insert records into table with null value" in connector.withConnection { conn =>
     conn.update("insert into prog_lang (id, name) values (?, ?)", Seq(None, "cobol"))
-    val count: Option[Int] = conn.mapFirst("select count(*) from prog_lang where id is null") { rs =>
+    val count: Option[Int] = conn.first("select count(*) from prog_lang where id is null") { rs =>
       rs.get[Int](1)
     }
     assert(count.getOrElse(0) == 1)
@@ -76,9 +76,9 @@ class SqlSpec extends FlatSpec {
     val query = "select name from prog_lang where id = ?"
     val namer = (rs: ResultSet) => rs.getString("name")
 
-    assert(conn.mapFirst(query, Seq(11))(namer).contains("java"))
-    assert(conn.mapFirst(query, Seq(12))(namer).contains("groovy"))
-    assert(conn.mapFirst(query, Seq(13))(namer).contains("scala"))
+    assert(conn.first(query, Seq(11))(namer).contains("java"))
+    assert(conn.first(query, Seq(12))(namer).contains("groovy"))
+    assert(conn.first(query, Seq(13))(namer).contains("scala"))
   }
 
   it should "execute batch of commands (with multiple sets of parameters)" in connector.withConnection { conn =>
@@ -89,9 +89,9 @@ class SqlSpec extends FlatSpec {
     val query = "select name from prog_lang where id = ?"
     val namer = (rs: ResultSet) => rs.getString("name")
 
-    assert(conn.mapFirst(query, Seq(21))(namer).contains("java"))
-    assert(conn.mapFirst(query, Seq(22))(namer).contains("groovy"))
-    assert(conn.mapFirst(query, Seq(23))(namer).contains("scala"))
+    assert(conn.first(query, Seq(21))(namer).contains("java"))
+    assert(conn.first(query, Seq(22))(namer).contains("groovy"))
+    assert(conn.first(query, Seq(23))(namer).contains("scala"))
   }
 
   it should "map rows" in connector.withConnection { conn =>

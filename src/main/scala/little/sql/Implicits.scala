@@ -387,19 +387,6 @@ object Implicits {
       query(sql, params, maxRows, fetchSize) { _.foreach(f) }
 
     /**
-     * Executes query and maps each row of ResultSet using supplied function.
-     *
-     * @param sql SQL query
-     * @param params parameters
-     * @param maxRows maximum number of rows to return in result set
-     * @param fetchSize number of result set rows to fetch on each retrieval
-     *   from database
-     * @param f map function
-     */
-    def map[T](sql: String, params: Seq[Any] = Nil, maxRows: Int = 0, fetchSize: Int = 0)(f: ResultSet => T): Seq[T] =
-      fold(sql, params, maxRows, fetchSize)(new ArrayBuffer[T]) { _ += f(_) }
-
-    /**
      * Executes query and maps first row of ResultSet using supplied function.
      *
      * The function's return value is wrapped in {@code Some}. Or, if result set
@@ -411,8 +398,21 @@ object Implicits {
      *
      * @return value from supplied function
      */
-    def mapFirst[T](sql: String, params: Seq[Any] = Nil)(f: ResultSet => T): Option[T] =
-      withPreparedStatement(sql) { _.mapFirst(params)(f) }
+    def first[T](sql: String, params: Seq[Any] = Nil)(f: ResultSet => T): Option[T] =
+      withPreparedStatement(sql) { _.first(params)(f) }
+
+    /**
+     * Executes query and maps each row of ResultSet using supplied function.
+     *
+     * @param sql SQL query
+     * @param params parameters
+     * @param maxRows maximum number of rows to return in result set
+     * @param fetchSize number of result set rows to fetch on each retrieval
+     *   from database
+     * @param f map function
+     */
+    def map[T](sql: String, params: Seq[Any] = Nil, maxRows: Int = 0, fetchSize: Int = 0)(f: ResultSet => T): Seq[T] =
+      fold(sql, params, maxRows, fetchSize)(new ArrayBuffer[T]) { _ += f(_) }
 
     /**
      * Executes query and maps each row of ResultSet building a collection using
@@ -533,16 +533,6 @@ object Implicits {
       query(sql) { _.foreach(f) }
 
     /**
-     * Executes query and maps each row of ResultSet using supplied function.
-     *
-     * @param sql SQL query
-     * @param params parameters
-     * @param f map function
-     */
-    def map[T](sql: String)(f: ResultSet => T): Seq[T] =
-      fold(sql)(new ArrayBuffer[T]) { _ += f(_) }
-
-    /**
      * Executes query and maps first row of ResultSet using supplied function.
      *
      * The function's return value is wrapped in {@code Some}. Or, if result set
@@ -551,11 +541,21 @@ object Implicits {
      * @param sql SQL query
      * @param f function
      */
-    def mapFirst[T](sql: String)(f: ResultSet => T): Option[T] = {
+    def first[T](sql: String)(f: ResultSet => T): Option[T] = {
       var result: Option[T] = None
-      query(sql) { rs => result = rs.mapNext(f) }
+      query(sql) { rs => result = rs.next(f) }
       result
     }
+
+    /**
+     * Executes query and maps each row of ResultSet using supplied function.
+     *
+     * @param sql SQL query
+     * @param params parameters
+     * @param f map function
+     */
+    def map[T](sql: String)(f: ResultSet => T): Seq[T] =
+      fold(sql)(new ArrayBuffer[T]) { _ += f(_) }
 
     /**
      * Executes query and maps each row of ResultSet building a collection
@@ -685,16 +685,6 @@ object Implicits {
       query(params) { _.foreach(f) }
 
     /**
-     * Executes query with parameters and maps each row of ResultSet using
-     * supplied function.
-     *
-     * @param params parameters
-     * @param f map function
-     */
-    def map[T](params: Seq[Any])(f: ResultSet => T): Seq[T] =
-      fold(params)(new ArrayBuffer[T]) {_ += f(_) }
-
-    /**
      * Executes query with parameters and maps first row of ResultSet using
      * supplied function.
      *
@@ -704,11 +694,21 @@ object Implicits {
      * @param params parameters
      * @param f map function
      */
-    def mapFirst[T](params: Seq[Any])(f: ResultSet => T): Option[T] = {
+    def first[T](params: Seq[Any])(f: ResultSet => T): Option[T] = {
       var result: Option[T] = None
-      query(params) { rs => result = rs.mapNext(f) }
+      query(params) { rs => result = rs.next(f) }
       result
     }
+
+    /**
+     * Executes query with parameters and maps each row of ResultSet using
+     * supplied function.
+     *
+     * @param params parameters
+     * @param f map function
+     */
+    def map[T](params: Seq[Any])(f: ResultSet => T): Seq[T] =
+      fold(params)(new ArrayBuffer[T]) {_ += f(_) }
 
     /**
      * Executes query with parameters and maps each row of ResultSet building a
@@ -854,15 +854,6 @@ object Implicits {
         f(resultSet)
 
     /**
-     * Maps next row and all subsequent rows of ResultSet using supplied
-     * function.
-     *
-     * @param f map function
-     */
-    def map[T](f: ResultSet => T): Seq[T] =
-      fold(new ArrayBuffer[T]) { _ += f(_) }
-
-    /**
      * Maps next row of ResultSet using supplied function.
      *
      * The function's return value is wrapped in {@code Some}. Or, if there are
@@ -871,10 +862,19 @@ object Implicits {
      *
      * @param f map function
      */
-    def mapNext[T](f: ResultSet => T): Option[T] =
+    def next[T](f: ResultSet => T): Option[T] =
       if (resultSet.next())
         Some(f(resultSet))
       else None
+
+    /**
+     * Maps next row and all subsequent rows of ResultSet using supplied
+     * function.
+     *
+     * @param f map function
+     */
+    def map[T](f: ResultSet => T): Seq[T] =
+      fold(new ArrayBuffer[T]) { _ += f(_) }
 
     /**
      * Maps next row and all subsequent rows of ResultSet building a collection
