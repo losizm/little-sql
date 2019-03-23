@@ -281,15 +281,17 @@ object Implicits {
      *
      * @param sql SQL query
      * @param params parameters
+     * @param queryTimeout maximum number of seconds to wait for execution
      * @param maxRows maximum number of rows to return in result set
      * @param fetchSize number of result set rows to fetch on each retrieval
      *   from database
      * @param f function
      */
-    def query(sql: String, params: Seq[Any] = Nil, maxRows: Int = 0, fetchSize: Int = 0)(f: ResultSet => Unit): Unit = {
+    def query(sql: String, params: Seq[Any] = Nil, queryTimeout: Int = 0, maxRows: Int = 0, fetchSize: Int = 0)(f: ResultSet => Unit): Unit = {
       val stmt = connection.prepareStatement(sql)
 
       try {
+        if (queryTimeout > 0) Try(stmt.setQueryTimeout(queryTimeout))
         if (maxRows > 0) stmt.setMaxRows(maxRows)
         if (fetchSize > 0) stmt.setFetchSize(fetchSize)
 
@@ -304,9 +306,13 @@ object Implicits {
      *
      * @param sql SQL update
      * @param params parameters
+     * @param queryTimeout maximum number of seconds to wait for execution
      */
-    def update(sql: String, params: Seq[Any] = Nil): Int = {
+    def update(sql: String, params: Seq[Any] = Nil, queryTimeout: Int = 0): Int = {
       val stmt = connection.prepareStatement(sql)
+
+      if (queryTimeout > 0)
+        Try(stmt.setQueryTimeout(queryTimeout))
 
       try stmt.update(params)
       finally Try(stmt.close())
@@ -317,15 +323,17 @@ object Implicits {
      *
      * @param sql SQL
      * @param params parameters
+     * @param queryTimeout maximum number of seconds to wait for execution
      * @param maxRows maximum number of rows to return in result set
      * @param fetchSize number of result set rows to fetch on each retrieval
      *   from database
      * @param f function
      */
-    def execute(sql: String, params: Seq[Any] = Nil, maxRows: Int = 0, fetchSize: Int = 0)(f: Execution => Unit): Unit = {
+    def execute(sql: String, params: Seq[Any] = Nil, queryTimeout: Int = 0, maxRows: Int = 0, fetchSize: Int = 0)(f: Execution => Unit): Unit = {
       val stmt = connection.prepareStatement(sql)
 
       try {
+        if (queryTimeout > 0) Try(stmt.setQueryTimeout(queryTimeout))
         if (maxRows > 0) stmt.setMaxRows(maxRows)
         if (fetchSize > 0) stmt.setFetchSize(fetchSize)
 
@@ -378,13 +386,14 @@ object Implicits {
      *
      * @param sql SQL query
      * @param params parameters
+     * @param queryTimeout maximum number of seconds to wait for execution
      * @param maxRows maximum number of rows to return in result set
      * @param fetchSize number of result set rows to fetch on each retrieval
      *   from database
      * @param f function
      */
-    def foreach(sql: String, params: Seq[Any] = Nil, maxRows: Int = 0, fetchSize: Int = 0)(f: ResultSet => Unit): Unit =
-      query(sql, params, maxRows, fetchSize) { _.foreach(f) }
+    def foreach(sql: String, params: Seq[Any] = Nil, queryTimeout: Int = 0, maxRows: Int = 0, fetchSize: Int = 0)(f: ResultSet => Unit): Unit =
+      query(sql, params, queryTimeout, maxRows, fetchSize) { _.foreach(f) }
 
     /**
      * Executes query and maps first row of ResultSet using supplied function.
@@ -394,39 +403,47 @@ object Implicits {
      *
      * @param sql SQL query
      * @param params parameters
+     * @param queryTimeout maximum number of seconds to wait for execution
      * @param f function
      *
      * @return value from supplied function
      */
-    def first[T](sql: String, params: Seq[Any] = Nil)(f: ResultSet => T): Option[T] =
-      withPreparedStatement(sql) { _.first(params)(f) }
+    def first[T](sql: String, params: Seq[Any] = Nil, queryTimeout: Int = 0)(f: ResultSet => T): Option[T] =
+      withPreparedStatement(sql) { stmt =>
+        if (queryTimeout > 0)
+          Try(stmt.setQueryTimeout(queryTimeout))
+
+        stmt.first(params)(f)
+      }
 
     /**
      * Executes query and maps each row of ResultSet using supplied function.
      *
      * @param sql SQL query
      * @param params parameters
+     * @param queryTimeout maximum number of seconds to wait for execution
      * @param maxRows maximum number of rows to return in result set
      * @param fetchSize number of result set rows to fetch on each retrieval
      *   from database
      * @param f map function
      */
-    def map[T](sql: String, params: Seq[Any] = Nil, maxRows: Int = 0, fetchSize: Int = 0)(f: ResultSet => T): Seq[T] =
-      fold(sql, params, maxRows, fetchSize)(new ArrayBuffer[T]) { _ += f(_) }
+    def map[T](sql: String, params: Seq[Any] = Nil, queryTimeout: Int = 0, maxRows: Int = 0, fetchSize: Int = 0)(f: ResultSet => T): Seq[T] =
+      fold(sql, params, queryTimeout, maxRows, fetchSize)(new ArrayBuffer[T]) { _ += f(_) }
 
     /**
-     * Executes query and maps each row of ResultSet building a collection using
-     * elements returned map function.
+     * Executes query and builds a collection using the elements mapped from
+     * each row of ResultSet.
      *
      * @param sql SQL query
      * @param params parameters
+     * @param queryTimeout maximum number of seconds to wait for execution
      * @param maxRows maximum number of rows to return in result set
      * @param fetchSize number of result set rows to fetch on each retrieval
      *   from database
      * @param f map function
      */
-    def flatMap[T](sql: String, params: Seq[Any] = Nil, maxRows: Int = 0, fetchSize: Int = 0)(f: ResultSet => GenTraversableOnce[T]): Seq[T] =
-      fold(sql, params, maxRows, fetchSize)(new ArrayBuffer[T]) { (buf, rs) =>
+    def flatMap[T](sql: String, params: Seq[Any] = Nil, queryTimeout: Int = 0, maxRows: Int = 0, fetchSize: Int = 0)(f: ResultSet => GenTraversableOnce[T]): Seq[T] =
+      fold(sql, params, queryTimeout, maxRows, fetchSize)(new ArrayBuffer[T]) { (buf, rs) =>
         f(rs).foreach(buf.+=)
         buf
       }
@@ -437,16 +454,18 @@ object Implicits {
      *
      * @param sql SQL query
      * @param params parameters
+     * @param queryTimeout maximum number of seconds to wait for execution
      * @param maxRows maximum number of rows to return in result set
      * @param fetchSize number of result set rows to fetch on each retrieval
      *   from database
      * @param z start value
      * @param op binary operator
      */
-    def fold[T](sql: String, params: Seq[Any] = Nil, maxRows: Int = 0, fetchSize: Int = 0)(z: T)(op: (T, ResultSet) => T): T = {
+    def fold[T](sql: String, params: Seq[Any] = Nil, queryTimeout: Int = 0, maxRows: Int = 0, fetchSize: Int = 0)(z: T)(op: (T, ResultSet) => T): T = {
       val stmt = connection.prepareStatement(sql)
 
       try {
+        if (queryTimeout > 0) Try(stmt.setQueryTimeout(queryTimeout))
         if (maxRows > 0) stmt.setMaxRows(maxRows)
         if (fetchSize > 0) stmt.setFetchSize(fetchSize)
 
@@ -558,8 +577,8 @@ object Implicits {
       fold(sql)(new ArrayBuffer[T]) { _ += f(_) }
 
     /**
-     * Executes query and maps each row of ResultSet building a collection
-     * using elements returned from map function.
+     * Executes query and builds a collection using the elements mapped from
+     * each row of ResultSet.
      *
      * @param sql SQL query
      * @param params parameters
@@ -711,8 +730,8 @@ object Implicits {
       fold(params)(new ArrayBuffer[T]) {_ += f(_) }
 
     /**
-     * Executes query with parameters and maps each row of ResultSet building a
-     * collection using elements returned from map function.
+     * Executes query and builds a collection using the elements mapped from
+     * each row of ResultSet.
      *
      * @param params parameters
      * @param f map function
@@ -868,8 +887,7 @@ object Implicits {
       else None
 
     /**
-     * Maps next row and all subsequent rows of ResultSet using supplied
-     * function.
+     * Maps next and all subsequent rows of ResultSet using supplied function.
      *
      * @param f map function
      */
@@ -877,8 +895,8 @@ object Implicits {
       fold(new ArrayBuffer[T]) { _ += f(_) }
 
     /**
-     * Maps next row and all subsequent rows of ResultSet building a collection
-     * using elements returned map function.
+     * Maps next and all subsequent rows of ResultSet building a collection
+     * using elements returned from map function.
      *
      * @param f map function
      */
