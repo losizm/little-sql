@@ -22,7 +22,7 @@ import javax.sql.DataSource
 
 import scala.collection.GenTraversableOnce
 import scala.collection.mutable.ArrayBuffer
-import scala.language.higherKinds
+import scala.language.{ higherKinds, implicitConversions }
 import scala.util.Try
 
 /** Provides implicits values and types. */
@@ -38,6 +38,55 @@ object Implicits {
   // java.sql.Timestamp <=> java.time.LocalDateTime
   private def timestampToLocalDateTime(value: Timestamp): LocalDateTime = if (value != null) value.toLocalDateTime else null
   private def localDateTimeToTimestamp(value: LocalDateTime): Timestamp = if (value != null) Timestamp.valueOf(value) else null
+
+  /** Converts String to InParam. */
+  implicit def stringToInParam(value: String) = InParam(value, Types.VARCHAR)
+
+  /** Converts Boolean to InParam. */
+  implicit def booleanToInParam(value: Boolean) = InParam(value, Types.BOOLEAN)
+
+  /** Converts Byte to InParam. */
+  implicit def byteToInParam(value: Byte) = InParam(value, Types.TINYINT)
+
+  /** Converts Short to InParam. */
+  implicit def shortToInParam(value: Short) = InParam(value, Types.SMALLINT)
+
+  /** Converts Int to InParam. */
+  implicit def intToInParam(value: Int) = InParam(value, Types.INTEGER)
+
+  /** Converts Long to InParam. */
+  implicit def longToInParam(value: Long) = InParam(value, Types.BIGINT)
+
+  /** Converts Float to InParam. */
+  implicit def floatToInParam(value: Float) = InParam(value, Types.FLOAT)
+
+  /** Converts Double to InParam. */
+  implicit def doubleToInParam(value: Double) = InParam(value, Types.DOUBLE)
+
+  /** Converts BigDecimal to InParam. */
+  implicit def bigDecimalToInParam(value: BigDecimal) = InParam(value, Types.DECIMAL)
+
+  /** Converts Date to InParam. */
+  implicit def dateToInParam(value: Date) = InParam(value, Types.DATE)
+
+  /** Converts Time to InParam. */
+  implicit def timeToInParam(value: Time) = InParam(value, Types.TIME)
+
+  /** Converts Timestamp to InParam. */
+  implicit def timestampToInParam(value: Timestamp) = InParam(value, Types.TIMESTAMP)
+
+  /** Converts LocalDate to InParam. */
+  implicit def localDateToInParam(value: LocalDate) = InParam(localDateToDate(value), Types.DATE)
+
+  /** Converts LocalTime to InParam. */
+  implicit def localTimeToInParam(value: LocalTime) = InParam(localTimeToTime(value), Types.TIME)
+
+  /** Converts LocalDateTime to InParam. */
+  implicit def localDateTimeToInParam(value: LocalDateTime) = InParam(localDateTimeToTimestamp(value), Types.TIMESTAMP)
+
+  /** Converts Option[T] to InParam. */
+  implicit def optionToInParam[T](value: Option[T])(implicit toInParam: T => InParam) =
+    value.map(toInParam).getOrElse(toInParam(null.asInstanceOf[T]))
 
   /** Gets String from ResultSet. */
   implicit object GetString extends GetValue[String] {
