@@ -110,8 +110,8 @@ class SqlSpec extends FlatSpec {
     assert(entries == Seq(21 -> "java", 22 -> "groovy", 23 -> "scala"))
   }
 
-  it should "fold rows" in connector.withConnection { conn =>
-    val sum = conn.fold("select id, name from prog_lang where id in (21, 22, 23) order by id")(0) { (sum, rs) =>
+  it should "fold rows" in connector.withConnection { implicit conn =>
+    val sum = QueryBuilder("select id, name from prog_lang where id in (21, 22, 23) order by id").fold(0) { (sum, rs) =>
       sum + rs.getInt("id")
     }
 

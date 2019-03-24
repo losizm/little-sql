@@ -273,19 +273,13 @@ object Implicits {
      *   from database
      * @param f function
      */
-    def query(sql: String, params: Seq[InParam] = Nil, queryTimeout: Int = 0, maxRows: Int = 0, fetchSize: Int = 0)(f: ResultSet => Unit): Unit = {
-      val stmt = connection.prepareStatement(sql)
-
-      try {
-        if (queryTimeout > 0) Try(stmt.setQueryTimeout(queryTimeout))
-        if (maxRows > 0) stmt.setMaxRows(maxRows)
-        if (fetchSize > 0) stmt.setFetchSize(fetchSize)
-
-        stmt.query(params)(f)
-      } finally {
-        Try(stmt.close())
-      }
-    }
+    def query(sql: String, params: Seq[InParam] = Nil, queryTimeout: Int = 0, maxRows: Int = 0, fetchSize: Int = 0)(f: ResultSet => Unit): Unit =
+      QueryBuilder(sql)
+        .params(params : _*)
+        .queryTimeout(queryTimeout)
+        .maxRows(maxRows)
+        .fetchSize(fetchSize)
+        .withResultSet(f)(connection)
 
     /**
      * Executes update and returns update count.
@@ -294,15 +288,11 @@ object Implicits {
      * @param params parameters
      * @param queryTimeout maximum number of seconds to wait for execution
      */
-    def update(sql: String, params: Seq[InParam] = Nil, queryTimeout: Int = 0): Int = {
-      val stmt = connection.prepareStatement(sql)
-
-      if (queryTimeout > 0)
-        Try(stmt.setQueryTimeout(queryTimeout))
-
-      try stmt.update(params)
-      finally Try(stmt.close())
-    }
+    def update(sql: String, params: Seq[InParam] = Nil, queryTimeout: Int = 0): Long =
+      QueryBuilder(sql)
+        .params(params : _*)
+        .queryTimeout(queryTimeout)
+        .getUpdateCount(connection)
 
     /**
      * Executes SQL and passes Execution to supplied function.
@@ -315,19 +305,12 @@ object Implicits {
      *   from database
      * @param f function
      */
-    def execute(sql: String, params: Seq[InParam] = Nil, queryTimeout: Int = 0, maxRows: Int = 0, fetchSize: Int = 0)(f: Execution => Unit): Unit = {
-      val stmt = connection.prepareStatement(sql)
-
-      try {
-        if (queryTimeout > 0) Try(stmt.setQueryTimeout(queryTimeout))
-        if (maxRows > 0) stmt.setMaxRows(maxRows)
-        if (fetchSize > 0) stmt.setFetchSize(fetchSize)
-
-        stmt.execute(params)(f)
-      } finally {
-        Try(stmt.close())
-      }
-    }
+    def execute[T](sql: String, params: Seq[InParam] = Nil, queryTimeout: Int = 0, maxRows: Int = 0, fetchSize: Int = 0)(f: Execution => T): T =
+      QueryBuilder(sql).params(params : _*)
+        .queryTimeout(queryTimeout)
+        .maxRows(maxRows)
+        .fetchSize(fetchSize)
+        .execute(f)(connection)
 
     /**
      * Executes batch of commands and returns results.
@@ -379,7 +362,12 @@ object Implicits {
      * @param f function
      */
     def foreach(sql: String, params: Seq[InParam] = Nil, queryTimeout: Int = 0, maxRows: Int = 0, fetchSize: Int = 0)(f: ResultSet => Unit): Unit =
-      query(sql, params, queryTimeout, maxRows, fetchSize) { _.foreach(f) }
+      QueryBuilder(sql)
+        .params(params : _*)
+        .queryTimeout(queryTimeout)
+        .maxRows(maxRows)
+        .fetchSize(fetchSize)
+        .foreach(f)(connection)
 
     /**
      * Executes query and maps first row of ResultSet using supplied function.
@@ -395,12 +383,10 @@ object Implicits {
      * @return value from supplied function
      */
     def first[T](sql: String, params: Seq[InParam] = Nil, queryTimeout: Int = 0)(f: ResultSet => T): Option[T] =
-      withPreparedStatement(sql) { stmt =>
-        if (queryTimeout > 0)
-          Try(stmt.setQueryTimeout(queryTimeout))
-
-        stmt.first(params)(f)
-      }
+      QueryBuilder(sql)
+        .params(params : _*)
+        .queryTimeout(queryTimeout)
+        .first(f)(connection)
 
     /**
      * Executes query and maps each row of ResultSet using supplied function.
@@ -414,7 +400,12 @@ object Implicits {
      * @param f map function
      */
     def map[T](sql: String, params: Seq[InParam] = Nil, queryTimeout: Int = 0, maxRows: Int = 0, fetchSize: Int = 0)(f: ResultSet => T): Seq[T] =
-      fold(sql, params, queryTimeout, maxRows, fetchSize)(new ArrayBuffer[T]) { _ += f(_) }
+      QueryBuilder(sql)
+        .params(params : _*)
+        .queryTimeout(queryTimeout)
+        .maxRows(maxRows)
+        .fetchSize(fetchSize)
+        .map(f)(connection)
 
     /**
      * Executes query and builds a collection using the elements mapped from
@@ -429,37 +420,12 @@ object Implicits {
      * @param f map function
      */
     def flatMap[T](sql: String, params: Seq[InParam] = Nil, queryTimeout: Int = 0, maxRows: Int = 0, fetchSize: Int = 0)(f: ResultSet => GenTraversableOnce[T]): Seq[T] =
-      fold(sql, params, queryTimeout, maxRows, fetchSize)(new ArrayBuffer[T]) { (buf, rs) =>
-        f(rs).foreach(buf.+=)
-        buf
-      }
-
-    /**
-     * Executes query and folds ResultSet to single value using given start
-     * value and binary operator.
-     *
-     * @param sql SQL query
-     * @param params parameters
-     * @param queryTimeout maximum number of seconds to wait for execution
-     * @param maxRows maximum number of rows to return in result set
-     * @param fetchSize number of result set rows to fetch on each retrieval
-     *   from database
-     * @param z start value
-     * @param op binary operator
-     */
-    def fold[T](sql: String, params: Seq[InParam] = Nil, queryTimeout: Int = 0, maxRows: Int = 0, fetchSize: Int = 0)(z: T)(op: (T, ResultSet) => T): T = {
-      val stmt = connection.prepareStatement(sql)
-
-      try {
-        if (queryTimeout > 0) Try(stmt.setQueryTimeout(queryTimeout))
-        if (maxRows > 0) stmt.setMaxRows(maxRows)
-        if (fetchSize > 0) stmt.setFetchSize(fetchSize)
-
-        stmt.fold(params)(z)(op)
-      } finally {
-        Try(stmt.close())
-      }
-    }
+      QueryBuilder(sql)
+        .params(params : _*)
+        .queryTimeout(queryTimeout)
+        .maxRows(maxRows)
+        .fetchSize(fetchSize)
+        .flatMap(f)(connection)
 
     /**
      * Creates Statement and passes it to supplied function. Statement is closed
@@ -471,7 +437,6 @@ object Implicits {
      */
     def withStatement[T](f: Statement => T): T = {
       val stmt = connection.createStatement()
-
       try f(stmt)
       finally Try(stmt.close())
     }
@@ -487,7 +452,6 @@ object Implicits {
      */
     def withPreparedStatement[T](sql: String)(f: PreparedStatement => T): T = {
       val stmt = connection.prepareStatement(sql)
-
       try f(stmt)
       finally Try(stmt.close())
     }
@@ -576,16 +540,7 @@ object Implicits {
         buf
       }
 
-    /**
-     * Executes query and folds ResultSet to single value using given start
-     * value and binary operator.
-     *
-     * @param sql SQL query
-     * @param params parameters
-     * @param z start value
-     * @param op binary operator
-     */
-    def fold[T](sql: String)(z: T)(op: (T, ResultSet) => T): T = {
+    private def fold[T](sql: String)(z: T)(op: (T, ResultSet) => T): T = {
       val rs = statement.executeQuery(sql)
       try rs.fold(z)(op)
       finally Try(rs.close())
@@ -700,15 +655,7 @@ object Implicits {
         buf
       }
 
-    /**
-     * Executes query with parameters and folds ResultSet to single value using
-     * given start value and binary operator.
-     *
-     * @param params parameters
-     * @param z start value
-     * @param op binary operator
-     */
-    def fold[T](params: Seq[InParam])(z: T)(op: (T, ResultSet) => T): T = {
+    private def fold[T](params: Seq[InParam])(z: T)(op: (T, ResultSet) => T): T = {
       setParameters(params)
       val rs = statement.executeQuery()
       try rs.fold(z)(op)
@@ -844,14 +791,14 @@ object Implicits {
       }
 
     /**
-     * Folds ResultSet to single value using given start value and binary
+     * Folds ResultSet to single value using given initial value and binary
      * operator.
      *
-     * @param z start value
+     * @param init initial value
      * @param op binary operator
      */
-    def fold[T](z: T)(op: (T, ResultSet) => T): T = {
-      var res = z
+    def fold[T](init: T)(op: (T, ResultSet) => T): T = {
+      var res = init
       while (resultSet.next())
         res = op(res, resultSet)
       res
