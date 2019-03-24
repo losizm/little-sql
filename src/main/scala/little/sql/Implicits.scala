@@ -39,6 +39,9 @@ object Implicits {
   private def timestampToLocalDateTime(value: Timestamp): LocalDateTime = if (value != null) value.toLocalDateTime else null
   private def localDateTimeToTimestamp(value: LocalDateTime): Timestamp = if (value != null) Timestamp.valueOf(value) else null
 
+  /** Converts null to InParam. */
+  implicit def nullToInParam(value: Null) = InParam.NULL
+
   /** Converts String to InParam. */
   implicit def stringToInParam(value: String) = InParam(value, Types.VARCHAR)
 
@@ -86,7 +89,7 @@ object Implicits {
 
   /** Converts Option[T] to InParam. */
   implicit def optionToInParam[T](value: Option[T])(implicit toInParam: T => InParam) =
-    value.map(toInParam).getOrElse(toInParam(null.asInstanceOf[T]))
+    value.map(toInParam).getOrElse(InParam.NULL)
 
   /** Gets String from ResultSet. */
   implicit object GetString extends GetValue[String] {
@@ -192,71 +195,6 @@ object Implicits {
       if (rs.wasNull) Option.empty[T] else Some(value)
     }
 
-  /** Sets String in PreparedStatement. */
-  implicit val setString: SetValue[String] = (stmt, index, value) =>
-    if (value != null) stmt.setString(index, value)
-    else  stmt.setNull(index, Types.VARCHAR)
-
-  /** Sets Boolean in PreparedStatement. */
-  implicit val setBoolean: SetValue[Boolean] = (stmt, index, value) => stmt.setBoolean(index, value)
-
-  /** Sets Byte in PreparedStatement. */
-  implicit val setByte: SetValue[Byte] = (stmt, index, value) => stmt.setByte(index, value)
-
-  /** Sets Int in PreparedStatement. */
-  implicit val setInt: SetValue[Int] = (stmt, index, value) => stmt.setInt(index, value)
-
-  /** Sets Short in PreparedStatement. */
-  implicit val setShort: SetValue[Short] = (stmt, index, value) => stmt.setShort(index, value)
-
-  /** Sets Long in PreparedStatement. */
-  implicit val setLong: SetValue[Long] = (stmt, index, value) => stmt.setLong(index, value)
-
-  /** Sets Float in PreparedStatement. */
-  implicit val setFloat: SetValue[Float] = (stmt, index, value) => stmt.setFloat(index, value)
-
-  /** Sets Double in PreparedStatement. */
-  implicit val setDouble: SetValue[Double] = (stmt, index, value) => stmt.setDouble(index, value)
-
-  /** Sets BigDecimal in PreparedStatement. */
-  implicit val setBigDecimal: SetValue[BigDecimal] = (stmt, index, value) =>
-    if (value != null) stmt.setBigDecimal(index, value.bigDecimal)
-    else stmt.setNull(index, Types.DECIMAL)
-
-  /** Sets Date in PreparedStatement. */
-  implicit val setDate: SetValue[Date] = (stmt, index, value) =>
-    if (value != null) stmt.setDate(index, value)
-    else stmt.setNull(index, Types.DATE)
-
-  /** Sets Time in PreparedStatement. */
-  implicit val setTime: SetValue[Time] = (stmt, index, value) =>
-    if (value != null) stmt.setTime(index, value)
-    else stmt.setNull(index, Types.TIME)
-
-  /** Sets Timestamp in PreparedStatement. */
-  implicit val setTimestamp: SetValue[Timestamp] = (stmt, index, value) =>
-    if (value != null) stmt.setTimestamp(index, value)
-    else stmt.setNull(index, Types.TIMESTAMP)
-
-  /** Sets LocalDate in PreparedStatement. */
-  implicit val setLocalDate: SetValue[LocalDate] = (stmt, index, value) =>
-    if (value != null) stmt.setDate(index, localDateToDate(value))
-    else stmt.setNull(index, Types.DATE)
-
-  /** Sets LocalTime in PreparedStatement. */
-  implicit val setLocalTime: SetValue[LocalTime] = (stmt, index, value) =>
-    if (value != null) stmt.setTime(index, localTimeToTime(value))
-    else stmt.setNull(index, Types.TIME)
-
-  /** Sets LocalDateTime in PreparedStatement. */
-  implicit val setLocalDateTime: SetValue[LocalDateTime] = (stmt, index, value) =>
-    if (value != null) stmt.setTimestamp(index, localDateTimeToTimestamp(value))
-    else stmt.setNull(index, Types.TIMESTAMP)
-
-  /** Sets Option[T] in PreparedStatement. */
-  implicit def setOption[T](implicit setValue: SetValue[T]): SetValue[Option[T]] =
-    (stmt, index, value) => value.fold(stmt.setNull(index, Types.VARCHAR)) { x => setValue(stmt, index, x) }
-
   /** Provides extension methods to {@code javax.sql.DataSource}. */
   implicit class DataSourceType(val dataSource: DataSource) extends AnyVal {
     /**
@@ -291,7 +229,6 @@ object Implicits {
       finally Try(conn.close())
     }
   }
-
 
   /**
    * Provides extension methods to {@code java.sql.Connection}.
@@ -336,7 +273,7 @@ object Implicits {
      *   from database
      * @param f function
      */
-    def query(sql: String, params: Seq[Any] = Nil, queryTimeout: Int = 0, maxRows: Int = 0, fetchSize: Int = 0)(f: ResultSet => Unit): Unit = {
+    def query(sql: String, params: Seq[InParam] = Nil, queryTimeout: Int = 0, maxRows: Int = 0, fetchSize: Int = 0)(f: ResultSet => Unit): Unit = {
       val stmt = connection.prepareStatement(sql)
 
       try {
@@ -357,7 +294,7 @@ object Implicits {
      * @param params parameters
      * @param queryTimeout maximum number of seconds to wait for execution
      */
-    def update(sql: String, params: Seq[Any] = Nil, queryTimeout: Int = 0): Int = {
+    def update(sql: String, params: Seq[InParam] = Nil, queryTimeout: Int = 0): Int = {
       val stmt = connection.prepareStatement(sql)
 
       if (queryTimeout > 0)
@@ -378,7 +315,7 @@ object Implicits {
      *   from database
      * @param f function
      */
-    def execute(sql: String, params: Seq[Any] = Nil, queryTimeout: Int = 0, maxRows: Int = 0, fetchSize: Int = 0)(f: Execution => Unit): Unit = {
+    def execute(sql: String, params: Seq[InParam] = Nil, queryTimeout: Int = 0, maxRows: Int = 0, fetchSize: Int = 0)(f: Execution => Unit): Unit = {
       val stmt = connection.prepareStatement(sql)
 
       try {
@@ -419,7 +356,7 @@ object Implicits {
      * @param sql SQL from which prepared statement is created
      * @param generator parameter generator
      */
-    def batch(sql: String)(generator: () => Iterable[Seq[Any]]): Array[Int] = {
+    def batch(sql: String)(generator: () => Iterable[Seq[InParam]]): Array[Int] = {
       val stmt = connection.prepareStatement(sql)
 
       try {
@@ -441,7 +378,7 @@ object Implicits {
      *   from database
      * @param f function
      */
-    def foreach(sql: String, params: Seq[Any] = Nil, queryTimeout: Int = 0, maxRows: Int = 0, fetchSize: Int = 0)(f: ResultSet => Unit): Unit =
+    def foreach(sql: String, params: Seq[InParam] = Nil, queryTimeout: Int = 0, maxRows: Int = 0, fetchSize: Int = 0)(f: ResultSet => Unit): Unit =
       query(sql, params, queryTimeout, maxRows, fetchSize) { _.foreach(f) }
 
     /**
@@ -457,7 +394,7 @@ object Implicits {
      *
      * @return value from supplied function
      */
-    def first[T](sql: String, params: Seq[Any] = Nil, queryTimeout: Int = 0)(f: ResultSet => T): Option[T] =
+    def first[T](sql: String, params: Seq[InParam] = Nil, queryTimeout: Int = 0)(f: ResultSet => T): Option[T] =
       withPreparedStatement(sql) { stmt =>
         if (queryTimeout > 0)
           Try(stmt.setQueryTimeout(queryTimeout))
@@ -476,7 +413,7 @@ object Implicits {
      *   from database
      * @param f map function
      */
-    def map[T](sql: String, params: Seq[Any] = Nil, queryTimeout: Int = 0, maxRows: Int = 0, fetchSize: Int = 0)(f: ResultSet => T): Seq[T] =
+    def map[T](sql: String, params: Seq[InParam] = Nil, queryTimeout: Int = 0, maxRows: Int = 0, fetchSize: Int = 0)(f: ResultSet => T): Seq[T] =
       fold(sql, params, queryTimeout, maxRows, fetchSize)(new ArrayBuffer[T]) { _ += f(_) }
 
     /**
@@ -491,7 +428,7 @@ object Implicits {
      *   from database
      * @param f map function
      */
-    def flatMap[T](sql: String, params: Seq[Any] = Nil, queryTimeout: Int = 0, maxRows: Int = 0, fetchSize: Int = 0)(f: ResultSet => GenTraversableOnce[T]): Seq[T] =
+    def flatMap[T](sql: String, params: Seq[InParam] = Nil, queryTimeout: Int = 0, maxRows: Int = 0, fetchSize: Int = 0)(f: ResultSet => GenTraversableOnce[T]): Seq[T] =
       fold(sql, params, queryTimeout, maxRows, fetchSize)(new ArrayBuffer[T]) { (buf, rs) =>
         f(rs).foreach(buf.+=)
         buf
@@ -510,7 +447,7 @@ object Implicits {
      * @param z start value
      * @param op binary operator
      */
-    def fold[T](sql: String, params: Seq[Any] = Nil, queryTimeout: Int = 0, maxRows: Int = 0, fetchSize: Int = 0)(z: T)(op: (T, ResultSet) => T): T = {
+    def fold[T](sql: String, params: Seq[InParam] = Nil, queryTimeout: Int = 0, maxRows: Int = 0, fetchSize: Int = 0)(z: T)(op: (T, ResultSet) => T): T = {
       val stmt = connection.prepareStatement(sql)
 
       try {
@@ -662,42 +599,15 @@ object Implicits {
    */
   implicit class PreparedStatementType(val statement: PreparedStatement) extends AnyVal {
     /**
-     * Sets parameter at index to given value.
-     *
-     * This method can be used with type inference (i.e., without specifying
-     * type parameter) as shown in example below.
-     * {{{
-     * import little.sql._
-     * import Implicits._
-     *
-     * val id = 1
-     * val email = "jane.doe@xyz.com"
-     * val name: Option[String] = None
-     *
-     * statement.set(1, id)
-     * statement.set(2, email)
-     * statement.set(3, name) // Sets parameter value to null
-     * }}}
-     *
-     * @tparam T type of value to set
-     *
-     * @param index parameter index
-     * @param value parameter value
-     */
-    def set[T](index: Int, value: T)(implicit setValue: SetValue[T]): Unit =
-      setValue(statement, index, value)
-
-    /**
      * Executes query with parameters and passes ResultSet to supplied function.
      *
      * @param params parameters
      * @param f function
      */
-    def query(params: Seq[Any])(f: ResultSet => Unit): Unit = {
+    def query(params: Seq[InParam])(f: ResultSet => Unit): Unit = {
       setParameters(params)
 
       val rs = statement.executeQuery()
-
       try f(rs)
       finally Try(rs.close())
     }
@@ -707,7 +617,7 @@ object Implicits {
      *
      * @param params parameters
      */
-    def update(params: Seq[Any]): Int = {
+    def update(params: Seq[InParam]): Int = {
       setParameters(params)
       statement.executeUpdate()
     }
@@ -719,12 +629,11 @@ object Implicits {
      * @param params parameters
      * @param f function
      */
-    def execute(params: Seq[Any])(f: Execution => Unit): Unit = {
+    def execute(params: Seq[InParam])(f: Execution => Unit): Unit = {
       setParameters(params)
 
       if (statement.execute()) {
         val rs = statement.getResultSet
-
         try f(Query(rs))
         finally Try(rs.close())
       } else {
@@ -737,7 +646,7 @@ object Implicits {
      *
      * @param params parameters
      */
-    def addBatch(params: Seq[Any]): Unit = {
+    def addBatch(params: Seq[InParam]): Unit = {
       setParameters(params)
       statement.addBatch()
     }
@@ -749,7 +658,7 @@ object Implicits {
      * @param params parameters
      * @param f function
      */
-    def foreach(params: Seq[Any])(f: ResultSet => Unit): Unit =
+    def foreach(params: Seq[InParam])(f: ResultSet => Unit): Unit =
       query(params) { _.foreach(f) }
 
     /**
@@ -762,7 +671,7 @@ object Implicits {
      * @param params parameters
      * @param f map function
      */
-    def first[T](params: Seq[Any])(f: ResultSet => T): Option[T] = {
+    def first[T](params: Seq[InParam])(f: ResultSet => T): Option[T] = {
       var result: Option[T] = None
       query(params) { rs => result = rs.next(f) }
       result
@@ -775,7 +684,7 @@ object Implicits {
      * @param params parameters
      * @param f map function
      */
-    def map[T](params: Seq[Any])(f: ResultSet => T): Seq[T] =
+    def map[T](params: Seq[InParam])(f: ResultSet => T): Seq[T] =
       fold(params)(new ArrayBuffer[T]) {_ += f(_) }
 
     /**
@@ -785,7 +694,7 @@ object Implicits {
      * @param params parameters
      * @param f map function
      */
-    def flatMap[T](params: Seq[Any])(f: ResultSet => GenTraversableOnce[T]): Seq[T] =
+    def flatMap[T](params: Seq[InParam])(f: ResultSet => GenTraversableOnce[T]): Seq[T] =
       fold(params)(new ArrayBuffer[T]) { (buf, rs) =>
         f(rs).foreach(buf.+=)
         buf
@@ -799,7 +708,7 @@ object Implicits {
      * @param z start value
      * @param op binary operator
      */
-    def fold[T](params: Seq[Any])(z: T)(op: (T, ResultSet) => T): T = {
+    def fold[T](params: Seq[InParam])(z: T)(op: (T, ResultSet) => T): T = {
       setParameters(params)
       val rs = statement.executeQuery()
       try rs.fold(z)(op)
@@ -833,34 +742,13 @@ object Implicits {
     def setLocalDateTime(index: Int, value: LocalDateTime): Unit =
       statement.setTimestamp(index, Timestamp.valueOf(value))
 
-    private def setParameter(index: Int, value: Any): Unit =
-      if (value == null) {
-        statement.setNull(index, Types.VARCHAR)
-      } else {
-        value match {
-          case x: String        => statement.setString(index, x)
-          case x: Boolean       => statement.setBoolean(index, x)
-          case x: Int           => statement.setInt(index, x)
-          case x: Byte          => statement.setByte(index, x)
-          case x: Short         => statement.setShort(index, x)
-          case x: Long          => statement.setLong(index, x)
-          case x: Float         => statement.setFloat(index, x)
-          case x: Double        => statement.setDouble(index, x)
-          case x: BigDecimal    => statement.setBigDecimal(index, x.bigDecimal)
-          case x: Date          => statement.setDate(index, x)
-          case x: Time          => statement.setTime(index, x)
-          case x: Timestamp     => statement.setTimestamp(index, x)
-          case x: LocalDate     => setLocalDate(index, x)
-          case x: LocalTime     => setLocalTime(index, x)
-          case x: LocalDateTime => setLocalDateTime(index, x)
-          case x: Option[_]     => setParameter(index, x.getOrElse(null))
-          case x: Any           => statement.setObject(index, x)
-        }
-      }
-
-    private def setParameters(params: Seq[Any]): Unit =
+    private def setParameters(params: Seq[InParam]): Unit =
       params.zipWithIndex.foreach {
-        case (value, index) => setParameter(index + 1, value)
+        case (param, index) =>
+          param.isNull match {
+            case true  => statement.setNull(index + 1, param.sqlType)
+            case false => statement.setObject(index + 1, param.value, param.sqlType)
+          }
       }
   }
 

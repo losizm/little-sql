@@ -15,6 +15,8 @@
  */
 package little.sql
 
+import java.sql.Types
+
 /** Defines value for input parameter. */
 trait InParam {
   /** Gets value. */
@@ -29,6 +31,9 @@ trait InParam {
 
 /** Provides factory methods for InParam. */
 object InParam {
+  /** General-purpose instance of null input parameter. */
+  val NULL: InParam = InParamImpl(null, true, Types.VARCHAR)
+
   /**
    * Creates InParam with supplied properties.
    *

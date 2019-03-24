@@ -22,7 +22,7 @@ import scala.collection.mutable.ArrayBuffer
 import scala.util.Try
 
 /**
- * Provides mechanism to incrementally build and execute SQL statements.
+ * Provides interface to incrementally build and execute SQL statements.
  *
  * `QueryBuilder` is an immutable structure. A new builder is returned with each
  * requested modification, and a new statement and result set are created on

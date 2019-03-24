@@ -24,7 +24,8 @@ import java.sql.ResultSet
  *
  * @see [[Implicits.ConnectionType.execute ConnectionType.execute]],
  *  [[Implicits.StatementType.execute StatementType.execute]],
- *  [[Implicits.PreparedStatementType.execute PreparedStatementType.execute]]
+ *  [[Implicits.PreparedStatementType.execute PreparedStatementType.execute]],
+ *  [[QueryBuilder.execute]]
  */
 sealed abstract class Execution {
   /**
@@ -54,7 +55,7 @@ sealed abstract class Execution {
   def resultSet: ResultSet
 }
 
-/** Execution factory */
+/** Provides factory methods for Execution. */
 object Execution {
   /** Creates Update with specified count. */
   def apply(count: Int) = Update(count)
@@ -68,7 +69,8 @@ object Execution {
  *
  * @see [[Query]], [[Implicits.ConnectionType.execute ConnectionType.execute]],
  *  [[Implicits.StatementType.execute StatementType.execute]],
- *  [[Implicits.PreparedStatementType.execute PreparedStatementType.execute]]
+ *  [[Implicits.PreparedStatementType.execute PreparedStatementType.execute]],
+ *  [[QueryBuilder.execute]]
  *
  * @param count update count
  */
@@ -84,7 +86,8 @@ final case class Update(count: Int) extends Execution {
  *
  * @see [[Update]], [[Implicits.ConnectionType.execute ConnectionType.execute]],
  *  [[Implicits.StatementType.execute StatementType.execute]],
- *  [[Implicits.PreparedStatementType.execute PreparedStatementType.execute]]
+ *  [[Implicits.PreparedStatementType.execute PreparedStatementType.execute]],
+ *  [[QueryBuilder.execute]]
  *
  * @param resultSet result set
  */
