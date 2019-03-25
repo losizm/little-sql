@@ -10,18 +10,18 @@ To use **little-sql**, add it as a dependency to your project:
 
 * sbt
 ```scala
-libraryDependencies += "com.github.losizm" %% "little-sql" % "0.5.0"
+libraryDependencies += "com.github.losizm" %% "little-sql" % "0.6.0"
 ```
 * Gradle
 ```groovy
-compile group: 'com.github.losizm', name: 'little-sql_2.12', version: '0.5.0'
+compile group: 'com.github.losizm', name: 'little-sql_2.12', version: '0.6.0'
 ```
 * Maven
 ```xml
 <dependency>
   <groupId>com.github.losizm</groupId>
   <artifactId>little-sql_2.12</artifactId>
-  <version>0.5.0</version>
+  <version>0.6.0</version>
 </dependency>
 ```
 
@@ -89,9 +89,8 @@ value types.
 // Get connection, run update with parameters, and print number of rows inserted
 connector.withConnection { conn =>
   val sql = "insert into users (id, name) values (?, ?)"
-  val params = Seq(501, "ghostface")
 
-  val count = conn.update(sql, params)
+  val count = conn.update(sql, Seq(501, "ghostface"))
   println(s"Rows inserted: $count")
 }
 ```
@@ -127,6 +126,33 @@ val user: Option[User] = connector.withConnection { conn =>
   conn.first("select * from users where id = 501")(getUser)
 }
 ```
+
+### Mapping All Rows of Result Set
+
+You can also map over an entire result set.
+
+```scala
+val users: Seq[User] = connector.withConnection { conn =>
+  conn.map("select * from users")(getUser)
+}
+```
+
+Or, if you're particular about which rows to map, you can `flatMap` the result
+set instead.
+
+```scala
+val regUsers: Seq[User] = connector.withConnection { conn =>
+  conn.flatMap("select * from users") {
+    getUser(_) match {
+      case User(_, "root") => None
+      case user            => Some(user)
+    }
+  }
+}
+```
+
+The above example is not the best of use cases. You could've instead written the
+query to exclude the root user &ndash; but you get the point.
 
 ### Getting Custom Values from Result Set
 
@@ -172,32 +198,53 @@ connector.withConnection { conn =>
 
 ### Setting Custom Values in Prepared Statement
 
-You can define an implementation of `SetValue` to set custom values in a
-`PreparedStatement`.
+To set a parameter to a custom value, you can define an implicit conversion to
+convert the value to an `InParam`.
 
 ```scala
-import little.sql.SetValue
+import scala.language.implicitConversions
 
-// Set Secret in PreparedStatement
-implicit object SetSecret extends SetValue[Secret] {
-  def apply(stmt: PreparedStatement, index: Int, value: Secret): Unit =
-    stmt.setString(index, encrypt(value))
+import little.sql.InParam
 
-  private def encrypt(value: Secret): String =
-    value.text.reverse
-}
+// Convert Secret to InParam
+implicit def secretToInParam(value: Secret) =
+  if (value == null) InParam.NULL
+  else InParam(value.text.reverse)
 
 // Get connection, run update with parameters, and print number of rows inserted
 connector.withConnection { conn =>
-  conn.withPreparedStatement("insert into passwords (id, password) values (?, ?)") { stmt =>
-    stmt.setInt(1, 501)
-    stmt.set(2, Secret("ir0nm@n"))
+  val sql = "insert into passwords (id, password) values (?, ?)"
 
-    val count = stmt.executeUpdate()
-    println(s"Rows inserted: $count")
-  }
+  val count = conn.update(sql, Seq(501, Secret("ironm@n")))
+  println(s"Rows inserted: $count")
 }
 ```
+
+### Using QueryBuilder to Build and Execute Statements
+
+`QueryBuilder` is an immutable structure that provides an interface for
+incrementally building SQL statements. And, for executing them, it has versions
+of the comprehension methods demonstrated thus far, such as `foreach`, `map`,
+and `flatMap`, and adds `fold` to top it off.
+
+```scala
+import little.sql.QueryBuilder
+
+connector.withConnection { implicit conn =>
+  val sum = QueryBuilder("select * from users where id != ? and name != ?")
+    .params(0, "root") // Set input parameters
+    .queryTimeout(5)   // Set query timeout to 5 seconds
+    .maxRows(10)       // Limit result set to 10 rows
+    .fetchSize(10)     // Fetch 10 rows at a time
+    // Fold over all rows summing the user IDs
+    // Executes using implicit connection
+    .fold(0) { (sum, rs) => sum + rs.getInt("id") }
+
+  println(s"Sum: $sum")
+}
+```
+
+Again, the example isn't the best use case, but never mind that.
 
 ### Working with Data Source
 
