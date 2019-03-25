@@ -25,67 +25,57 @@ import scala.collection.mutable.ArrayBuffer
 import scala.language.{ higherKinds, implicitConversions }
 import scala.util.Try
 
+import TimeConverters._
+
 /** Provides implicits values and types. */
 object Implicits {
-  // java.sql.Date <=> java.time.LocalDate
-  private def dateToLocalDate(value: Date): LocalDate = if (value != null) value.toLocalDate else null
-  private def localDateToDate(value: LocalDate): Date = if (value != null) Date.valueOf(value) else null
-
-  // java.sql.Time <=> java.time.LocalTime
-  private def timeToLocalTime(value: Time): LocalTime = if (value != null) value.toLocalTime else null
-  private def localTimeToTime(value: LocalTime): Time = if (value != null) Time.valueOf(value) else null
-
-  // java.sql.Timestamp <=> java.time.LocalDateTime
-  private def timestampToLocalDateTime(value: Timestamp): LocalDateTime = if (value != null) value.toLocalDateTime else null
-  private def localDateTimeToTimestamp(value: LocalDateTime): Timestamp = if (value != null) Timestamp.valueOf(value) else null
-
   /** Converts null to InParam. */
   implicit def nullToInParam(value: Null) = InParam.NULL
 
   /** Converts String to InParam. */
-  implicit def stringToInParam(value: String) = InParam(value, Types.VARCHAR)
+  implicit def stringToInParam(value: String) = InParam(value)
 
   /** Converts Boolean to InParam. */
-  implicit def booleanToInParam(value: Boolean) = InParam(value, Types.BOOLEAN)
+  implicit def booleanToInParam(value: Boolean) = InParam(value)
 
   /** Converts Byte to InParam. */
-  implicit def byteToInParam(value: Byte) = InParam(value, Types.TINYINT)
+  implicit def byteToInParam(value: Byte) = InParam(value)
 
   /** Converts Short to InParam. */
-  implicit def shortToInParam(value: Short) = InParam(value, Types.SMALLINT)
+  implicit def shortToInParam(value: Short) = InParam(value)
 
   /** Converts Int to InParam. */
-  implicit def intToInParam(value: Int) = InParam(value, Types.INTEGER)
+  implicit def intToInParam(value: Int) = InParam(value)
 
   /** Converts Long to InParam. */
-  implicit def longToInParam(value: Long) = InParam(value, Types.BIGINT)
+  implicit def longToInParam(value: Long) = InParam(value)
 
   /** Converts Float to InParam. */
-  implicit def floatToInParam(value: Float) = InParam(value, Types.FLOAT)
+  implicit def floatToInParam(value: Float) = InParam(value)
 
   /** Converts Double to InParam. */
-  implicit def doubleToInParam(value: Double) = InParam(value, Types.DOUBLE)
+  implicit def doubleToInParam(value: Double) = InParam(value)
 
   /** Converts BigDecimal to InParam. */
-  implicit def bigDecimalToInParam(value: BigDecimal) = InParam(value, Types.DECIMAL)
+  implicit def bigDecimalToInParam(value: BigDecimal) = InParam(value)
 
   /** Converts Date to InParam. */
-  implicit def dateToInParam(value: Date) = InParam(value, Types.DATE)
+  implicit def dateToInParam(value: Date) = InParam(value)
 
   /** Converts Time to InParam. */
-  implicit def timeToInParam(value: Time) = InParam(value, Types.TIME)
+  implicit def timeToInParam(value: Time) = InParam(value)
 
   /** Converts Timestamp to InParam. */
-  implicit def timestampToInParam(value: Timestamp) = InParam(value, Types.TIMESTAMP)
+  implicit def timestampToInParam(value: Timestamp) = InParam(value)
 
   /** Converts LocalDate to InParam. */
-  implicit def localDateToInParam(value: LocalDate) = InParam(localDateToDate(value), Types.DATE)
+  implicit def localDateToInParam(value: LocalDate) = InParam(value)
 
   /** Converts LocalTime to InParam. */
-  implicit def localTimeToInParam(value: LocalTime) = InParam(localTimeToTime(value), Types.TIME)
+  implicit def localTimeToInParam(value: LocalTime) = InParam(value)
 
   /** Converts LocalDateTime to InParam. */
-  implicit def localDateTimeToInParam(value: LocalDateTime) = InParam(localDateTimeToTimestamp(value), Types.TIMESTAMP)
+  implicit def localDateTimeToInParam(value: LocalDateTime) = InParam(value)
 
   /** Converts Option[T] to InParam. */
   implicit def optionToInParam[T](value: Option[T])(implicit toInParam: T => InParam) =
