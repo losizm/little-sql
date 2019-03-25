@@ -81,6 +81,34 @@ object Implicits {
   implicit def optionToInParam[T](value: Option[T])(implicit toInParam: T => InParam) =
     value.map(toInParam).getOrElse(InParam.NULL)
 
+  /** Converts Any to InParam. */
+  implicit def anyToParam(value: Any): InParam =
+    value match {
+      case null             => InParam.NULL
+      case x: InParam       => x
+      case x: String        => InParam(x)
+      case x: Boolean       => InParam(x)
+      case x: Byte          => InParam(x)
+      case x: Short         => InParam(x)
+      case x: Int           => InParam(x)
+      case x: Long          => InParam(x)
+      case x: Float         => InParam(x)
+      case x: Double        => InParam(x)
+      case x: BigDecimal    => InParam(x)
+      case x: Date          => InParam(x)
+      case x: Time          => InParam(x)
+      case x: Timestamp     => InParam(x)
+      case x: LocalDate     => InParam(x)
+      case x: LocalTime     => InParam(x)
+      case x: LocalDateTime => InParam(x)
+      case x: Option[_]     => anyToParam(x.getOrElse(null))
+      case x: Any           => throw new IllegalArgumentException(s"Cannot convert instance of ${x.getClass.getName} to little.sql.InParam")
+    }
+
+  /** Converts Seq[T] to Seq[InParam]. */
+  implicit def seqToParams[T](values: Seq[T])(implicit toInParam: T => InParam): Seq[InParam] =
+    values.map(toInParam)
+
   /** Gets String from ResultSet. */
   implicit object GetString extends GetValue[String] {
     def apply(rs: ResultSet, index: Int): String = rs.getString(index)
