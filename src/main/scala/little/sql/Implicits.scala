@@ -207,7 +207,6 @@ object Implicits {
      */
     def withConnection[T](f: Connection => T): T = {
       val conn = dataSource.getConnection()
-
       try f(conn)
       finally Try(conn.close())
     }
@@ -224,7 +223,6 @@ object Implicits {
      */
     def withConnection[T](user: String, password: String)(f: Connection => T): T = {
       val conn = dataSource.getConnection(user, password)
-
       try f(conn)
       finally Try(conn.close())
     }
@@ -263,6 +261,24 @@ object Implicits {
    */
   implicit class ConnectionType(val connection: Connection) extends AnyVal {
     /**
+     * Executes SQL and passes Execution to supplied function.
+     *
+     * @param sql SQL
+     * @param params parameters
+     * @param queryTimeout maximum number of seconds to wait for execution
+     * @param maxRows maximum number of rows to return in result set
+     * @param fetchSize number of result set rows to fetch on each retrieval
+     *   from database
+     * @param f function
+     */
+    def execute[T](sql: String, params: Seq[InParam] = Nil, queryTimeout: Int = 0, maxRows: Int = 0, fetchSize: Int = 0)(f: Execution => T): T =
+      QueryBuilder(sql).params(params : _*)
+        .queryTimeout(queryTimeout)
+        .maxRows(maxRows)
+        .fetchSize(fetchSize)
+        .execute(f)(connection)
+
+    /**
      * Executes query and passes ResultSet to supplied function.
      *
      * @param sql SQL query
@@ -273,7 +289,7 @@ object Implicits {
      *   from database
      * @param f function
      */
-    def query(sql: String, params: Seq[InParam] = Nil, queryTimeout: Int = 0, maxRows: Int = 0, fetchSize: Int = 0)(f: ResultSet => Unit): Unit =
+    def query[T](sql: String, params: Seq[InParam] = Nil, queryTimeout: Int = 0, maxRows: Int = 0, fetchSize: Int = 0)(f: ResultSet => T): T =
       QueryBuilder(sql)
         .params(params : _*)
         .queryTimeout(queryTimeout)
@@ -295,31 +311,11 @@ object Implicits {
         .getUpdateCount(connection)
 
     /**
-     * Executes SQL and passes Execution to supplied function.
-     *
-     * @param sql SQL
-     * @param params parameters
-     * @param queryTimeout maximum number of seconds to wait for execution
-     * @param maxRows maximum number of rows to return in result set
-     * @param fetchSize number of result set rows to fetch on each retrieval
-     *   from database
-     * @param f function
-     */
-    def execute[T](sql: String, params: Seq[InParam] = Nil, queryTimeout: Int = 0, maxRows: Int = 0, fetchSize: Int = 0)(f: Execution => T): T =
-      QueryBuilder(sql).params(params : _*)
-        .queryTimeout(queryTimeout)
-        .maxRows(maxRows)
-        .fetchSize(fetchSize)
-        .execute(f)(connection)
-
-    /**
-     * Executes batch of commands and returns results.
-     *
-     * The supplied generator must return an iterable set of SQL statements.
+     * Executes batch of generated statements and returns results.
      *
      * @param generator SQL generator
      */
-    def batch(generator: () => Iterable[String]): Array[Int] = {
+    def batch(generator: () => GenTraversableOnce[String]): Array[Int] = {
       val stmt = connection.createStatement()
 
       try {
@@ -331,15 +327,16 @@ object Implicits {
     }
 
     /**
-     * Executes batch of commands and returns results.
+     * Executes batch of statements with generated parameter values and returns
+     * results.
      *
-     * The supplied generator must return an iterable set of parameter values,
-     * with each set satisfying prepared statement as defined by {@code sql}.
+     * The generator must return sets of parameter values that satisfy the
+     * supplied SQL.
      *
      * @param sql SQL from which prepared statement is created
-     * @param generator parameter generator
+     * @param generator parameter value generator
      */
-    def batch(sql: String)(generator: () => Iterable[Seq[InParam]]): Array[Int] = {
+    def batch(sql: String)(generator: () => GenTraversableOnce[Seq[InParam]]): Array[Int] = {
       val stmt = connection.prepareStatement(sql)
 
       try {
@@ -464,33 +461,32 @@ object Implicits {
    */
   implicit class StatementType(val statement: Statement) extends AnyVal {
     /**
-     * Executes query  and passes ResultSet to supplied function.
-     *
-     * @param sql SQL query
-     * @param f function
-     */
-    def query(sql: String)(f: ResultSet => Unit): Unit = {
-      val rs = statement.executeQuery(sql)
-
-      try f(rs)
-      finally Try(rs.close())
-    }
-
-    /**
      * Executes SQL and passes Execution to supplied function.
      *
      * @param sql SQL statement
      * @param f function
      */
-    def execute(sql: String)(f: Execution => Unit): Unit =
-      if (statement.execute(sql)) {
-        val rs = statement.getResultSet
-
-        try f(Query(rs))
-        finally Try(rs.close())
-      } else {
-        f(Update(statement.getUpdateCount))
+    def execute[T](sql: String)(f: Execution => T): T =
+      statement.execute(sql) match {
+        case true =>
+          val rs = statement.getResultSet
+          try f(Query(rs))
+          finally Try(rs.close())
+        case false =>
+          f(Update(statement.getUpdateCount))
       }
+
+    /**
+     * Executes query  and passes ResultSet to supplied function.
+     *
+     * @param sql SQL query
+     * @param f function
+     */
+    def query[T](sql: String)(f: ResultSet => T): T = {
+      val rs = statement.executeQuery(sql)
+      try f(rs)
+      finally Try(rs.close())
+    }
 
     /**
      * Executes query and invokes supplied function for each row of ResultSet.
@@ -510,11 +506,8 @@ object Implicits {
      * @param sql SQL query
      * @param f function
      */
-    def first[T](sql: String)(f: ResultSet => T): Option[T] = {
-      var result: Option[T] = None
-      query(sql) { rs => result = rs.next(f) }
-      result
-    }
+    def first[T](sql: String)(f: ResultSet => T): Option[T] =
+      query(sql) { _.next(f) }
 
     /**
      * Executes query and maps each row of ResultSet using supplied function.
@@ -554,12 +547,32 @@ object Implicits {
    */
   implicit class PreparedStatementType(val statement: PreparedStatement) extends AnyVal {
     /**
+     * Executes statement with parameters and passes Execution to supplied
+     * function.
+     *
+     * @param params parameters
+     * @param f function
+     */
+    def execute[T](params: Seq[InParam])(f: Execution => T): T = {
+      setParameters(params)
+
+      statement.execute() match {
+        case true =>
+          val rs = statement.getResultSet
+          try f(Query(rs))
+          finally Try(rs.close())
+        case false =>
+          f(Update(statement.getUpdateCount))
+      }
+    }
+
+    /**
      * Executes query with parameters and passes ResultSet to supplied function.
      *
      * @param params parameters
      * @param f function
      */
-    def query(params: Seq[InParam])(f: ResultSet => Unit): Unit = {
+    def query[T](params: Seq[InParam])(f: ResultSet => T): T = {
       setParameters(params)
 
       val rs = statement.executeQuery()
@@ -575,25 +588,6 @@ object Implicits {
     def update(params: Seq[InParam]): Int = {
       setParameters(params)
       statement.executeUpdate()
-    }
-
-    /**
-     * Executes statement with parameters and passes Execution to supplied
-     * function.
-     *
-     * @param params parameters
-     * @param f function
-     */
-    def execute(params: Seq[InParam])(f: Execution => Unit): Unit = {
-      setParameters(params)
-
-      if (statement.execute()) {
-        val rs = statement.getResultSet
-        try f(Query(rs))
-        finally Try(rs.close())
-      } else {
-        f(Update(statement.getUpdateCount))
-      }
     }
 
     /**
@@ -626,11 +620,8 @@ object Implicits {
      * @param params parameters
      * @param f map function
      */
-    def first[T](params: Seq[InParam])(f: ResultSet => T): Option[T] = {
-      var result: Option[T] = None
-      query(params) { rs => result = rs.next(f) }
-      result
-    }
+    def first[T](params: Seq[InParam])(f: ResultSet => T): Option[T] =
+      query(params) { _.next(f) }
 
     /**
      * Executes query with parameters and maps each row of ResultSet using
@@ -657,6 +648,7 @@ object Implicits {
 
     private def fold[T](params: Seq[InParam])(z: T)(op: (T, ResultSet) => T): T = {
       setParameters(params)
+
       val rs = statement.executeQuery()
       try rs.fold(z)(op)
       finally Try(rs.close())
