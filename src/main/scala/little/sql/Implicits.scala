@@ -544,7 +544,7 @@ object Implicits {
      * @param f function
      */
     def execute[T](params: Seq[InParam])(f: Execution => T): T = {
-      setParameters(params)
+      set(params)
 
       statement.execute() match {
         case true =>
@@ -563,7 +563,7 @@ object Implicits {
      * @param f function
      */
     def query[T](params: Seq[InParam])(f: ResultSet => T): T = {
-      setParameters(params)
+      set(params)
 
       val rs = statement.executeQuery()
       try f(rs)
@@ -576,9 +576,33 @@ object Implicits {
      * @param params parameters
      */
     def update(params: Seq[InParam]): Int = {
-      setParameters(params)
+      set(params)
       statement.executeUpdate()
     }
+
+    /**
+     * Sets parameter at index to given value.
+     *
+     * @param index parameter index
+     * @param value parameter value
+     */
+    def set(index: Int, value: InParam): Unit =
+      value.isNull match {
+        case true  => statement.setNull(index + 1, value.sqlType)
+        case false => statement.setObject(index + 1, value.value, value.sqlType)
+      }
+
+
+    /**
+     * Sets parameters.
+     *
+     * @param index parameter index
+     * @param value parameter value
+     */
+    def set(params: Seq[InParam]): Unit =
+      params.zipWithIndex.foreach {
+        case (param, index) => set(index, param)
+      }
 
     /**
      * Adds parameters to batch of commands.
@@ -586,7 +610,7 @@ object Implicits {
      * @param params parameters
      */
     def addBatch(params: Seq[InParam]): Unit = {
-      setParameters(params)
+      set(params)
       statement.addBatch()
     }
 
@@ -636,14 +660,6 @@ object Implicits {
         buf
       }
 
-    private def fold[T](params: Seq[InParam])(z: T)(op: (T, ResultSet) => T): T = {
-      setParameters(params)
-
-      val rs = statement.executeQuery()
-      try rs.fold(z)(op)
-      finally Try(rs.close())
-    }
-
     /**
      * Sets parameter to given {@code LocalDate}.
      *
@@ -671,14 +687,13 @@ object Implicits {
     def setLocalDateTime(index: Int, value: LocalDateTime): Unit =
       statement.setTimestamp(index, Timestamp.valueOf(value))
 
-    private def setParameters(params: Seq[InParam]): Unit =
-      params.zipWithIndex.foreach {
-        case (param, index) =>
-          param.isNull match {
-            case true  => statement.setNull(index + 1, param.sqlType)
-            case false => statement.setObject(index + 1, param.value, param.sqlType)
-          }
-      }
+    private def fold[T](params: Seq[InParam])(z: T)(op: (T, ResultSet) => T): T = {
+      set(params)
+
+      val rs = statement.executeQuery()
+      try rs.fold(z)(op)
+      finally Try(rs.close())
+    }
   }
 
   /** Provides extension methods to {@code java.sql.ResultSet}. */
