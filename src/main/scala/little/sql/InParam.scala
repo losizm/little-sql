@@ -82,7 +82,8 @@ object InParam {
   def apply(value: Double): InParam = apply(value, Types.DOUBLE)
 
   /** Creates InParam from BigDecimal. */
-  def apply(value: BigDecimal): InParam = apply(value, Types.DECIMAL)
+  def apply(value: BigDecimal): InParam =
+    apply(if (value != null) value.bigDecimal else null, Types.DECIMAL)
 
   /** Creates InParam from Date. */
   def apply(value: Date): InParam = apply(value, Types.DATE)
