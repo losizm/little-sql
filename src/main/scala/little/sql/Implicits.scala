@@ -29,9 +29,6 @@ import TimeConverters._
 
 /** Provides implicits values and types. */
 object Implicits {
-  /** Converts null to InParam. */
-  implicit def nullToInParam(value: Null) = InParam.NULL
-
   /** Converts String to InParam. */
   implicit def stringToInParam(value: String) = InParam(value)
 
@@ -85,7 +82,6 @@ object Implicits {
   implicit def anyToParam(value: Any): InParam =
     value match {
       case null             => InParam.NULL
-      case x: InParam       => x
       case x: String        => InParam(x)
       case x: Boolean       => InParam(x)
       case x: Byte          => InParam(x)
@@ -102,6 +98,7 @@ object Implicits {
       case x: LocalTime     => InParam(x)
       case x: LocalDateTime => InParam(x)
       case x: Option[_]     => anyToParam(x.getOrElse(null))
+      case x: InParam       => x
       case x: Any           => throw new IllegalArgumentException(s"Cannot convert instance of ${x.getClass.getName} to little.sql.InParam")
     }
 
@@ -615,11 +612,13 @@ object Implicits {
      * @param value parameter value
      */
     def set(index: Int, value: InParam): Unit =
-      value.isNull match {
-        case true  => statement.setNull(index + 1, value.sqlType)
-        case false => statement.setObject(index + 1, value.value, value.sqlType)
-      }
-
+      if (value == null)
+        statement.setNull(index, Types.VARCHAR)
+      else
+        value.isNull match {
+          case true  => statement.setNull(index, value.sqlType)
+          case false => statement.setObject(index, value.value, value.sqlType)
+        }
 
     /**
      * Sets parameters.
@@ -629,7 +628,7 @@ object Implicits {
      */
     def set(params: Seq[InParam]): Unit =
       params.zipWithIndex.foreach {
-        case (param, index) => set(index, param)
+        case (param, index) => set(index + 1, param)
       }
 
     /**
