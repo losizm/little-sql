@@ -21,7 +21,7 @@ import java.time.{ LocalDate, LocalDateTime, LocalTime }
 import javax.sql.DataSource
 
 import scala.collection.GenTraversableOnce
-import scala.collection.mutable.ArrayBuffer
+import scala.collection.mutable.ListBuffer
 import scala.language.{ higherKinds, implicitConversions }
 import scala.util.Try
 
@@ -532,7 +532,7 @@ object Implicits {
      * @param f map function
      */
     def map[T](sql: String)(f: ResultSet => T): Seq[T] =
-      fold(sql)(new ArrayBuffer[T]) { _ += f(_) }
+      fold(sql)(new ListBuffer[T]) { _ += f(_) }
 
     /**
      * Executes query and builds a collection using the elements mapped from
@@ -543,7 +543,7 @@ object Implicits {
      * @param f map function
      */
     def flatMap[T](sql: String)(f: ResultSet => GenTraversableOnce[T]): Seq[T] =
-      fold(sql)(new ArrayBuffer[T]) { (buf, rs) =>
+      fold(sql)(new ListBuffer[T]) { (buf, rs) =>
         f(rs).foreach(buf.+=)
         buf
       }
@@ -672,7 +672,7 @@ object Implicits {
      * @param f map function
      */
     def map[T](params: Seq[InParam])(f: ResultSet => T): Seq[T] =
-      fold(params)(new ArrayBuffer[T]) {_ += f(_) }
+      fold(params)(new ListBuffer[T]) {_ += f(_) }
 
     /**
      * Executes query and builds a collection using the elements mapped from
@@ -682,7 +682,7 @@ object Implicits {
      * @param f map function
      */
     def flatMap[T](params: Seq[InParam])(f: ResultSet => GenTraversableOnce[T]): Seq[T] =
-      fold(params)(new ArrayBuffer[T]) { (buf, rs) =>
+      fold(params)(new ListBuffer[T]) { (buf, rs) =>
         f(rs).foreach(buf.+=)
         buf
       }
@@ -800,7 +800,7 @@ object Implicits {
      * @param f map function
      */
     def map[T](f: ResultSet => T): Seq[T] =
-      fold(new ArrayBuffer[T]) { _ += f(_) }
+      fold(new ListBuffer[T]) { _ += f(_) }
 
     /**
      * Maps next and all subsequent rows of ResultSet building a collection
@@ -809,7 +809,7 @@ object Implicits {
      * @param f map function
      */
     def flatMap[T](f: ResultSet => GenTraversableOnce[T]): Seq[T] =
-      fold(new ArrayBuffer[T]) { (buf, rs) =>
+      fold(new ListBuffer[T]) { (buf, rs) =>
         f(rs).foreach(buf.+=)
         buf
       }

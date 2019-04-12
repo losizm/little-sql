@@ -18,7 +18,7 @@ package little.sql
 import java.sql.{ Connection, PreparedStatement, ResultSet, Types }
 
 import scala.collection.GenTraversableOnce
-import scala.collection.mutable.ArrayBuffer
+import scala.collection.mutable.ListBuffer
 import scala.util.Try
 
 /**
@@ -203,7 +203,7 @@ private case class QueryBuilderImpl(sql: String, params: Seq[InParam] = Nil, que
 
   def map[T](f: ResultSet => T)(implicit conn: Connection): Seq[T] =
     withResultSet { rs =>
-      val values = new ArrayBuffer[T]
+      val values = new ListBuffer[T]
       while (rs.next())
         values += f(rs)
       values
@@ -211,7 +211,7 @@ private case class QueryBuilderImpl(sql: String, params: Seq[InParam] = Nil, que
 
   def flatMap[T](f: ResultSet => GenTraversableOnce[T])(implicit conn: Connection): Seq[T] =
     withResultSet { rs =>
-      val values = new ArrayBuffer[T]
+      val values = new ListBuffer[T]
       while (rs.next())
         f(rs).foreach(values.+=)
       values
