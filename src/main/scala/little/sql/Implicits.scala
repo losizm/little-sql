@@ -196,20 +196,6 @@ object Implicits {
     def apply(rs: ResultSet, label: String): LocalDateTime = timestampToLocalDateTime(rs.getTimestamp(label))
   }
 
-  /** Gets Option[T] by index from ResultSet. */
-  implicit def getOptionByIndex[T](implicit getValue: GetValueByIndex[T]): GetValueByIndex[Option[T]] =
-    (rs, index) => {
-      val value = getValue(rs, index)
-      if (rs.wasNull) Option.empty[T] else Some(value)
-    }
-
-  /** Gets Option[T] by label from ResultSet. */
-  implicit def getOptionByLabel[T](implicit getValue: GetValueByLabel[T]): GetValueByLabel[Option[T]] =
-    (rs, label) => {
-      val value = getValue(rs, label)
-      if (rs.wasNull) Option.empty[T] else Some(value)
-    }
-
   /** Provides extension methods to {@code javax.sql.DataSource}. */
   implicit class DataSourceType(val dataSource: DataSource) extends AnyVal {
     /**
@@ -752,6 +738,60 @@ object Implicits {
      * @param label column label
      */
     def get[T](label: String)(implicit getValue: GetValueByLabel[T]): T = getValue(resultSet, label)
+
+    /**
+     * Gets column value in current row, or returns default if value is null.
+     *
+     * @tparam T type of value to return
+     *
+     * @param index column index
+     * @param default default value
+     */
+    def getOrElse[T](index: Int, default: => T)(implicit getValue: GetValueByIndex[T]): T =
+      getOption(index)(getValue).getOrElse(default)
+
+    /**
+     * Gets column value in current row, or returns default if value is null.
+     *
+     * @tparam T type of value to return
+     *
+     * @param label column label
+     * @param default default value
+     */
+    def getOrElse[T](label: String, default: => T)(implicit getValue: GetValueByLabel[T]): T =
+      getOption(label)(getValue).getOrElse(default)
+
+    /**
+     * Gets column value in current row if value is not null.
+     *
+     * @tparam T type of value to return
+     *
+     * @param index column index
+     */
+    def getOption[T](index: Int)(implicit getValue: GetValueByIndex[T]): Option[T] = {
+      val value = getValue(resultSet, index)
+
+      resultSet.wasNull match {
+        case true  => None
+        case false => Some(value)
+      }
+    }
+
+    /**
+     * Gets column value in current row if value is not null.
+     *
+     * @tparam T type of value to return
+     *
+     * @param label column label
+     */
+    def getOption[T](label: String)(implicit getValue: GetValueByLabel[T]): Option[T] = {
+      val value = getValue(resultSet, label)
+
+      resultSet.wasNull match {
+        case true  => None
+        case false => Some(value)
+      }
+    }
 
     /** Gets column value as LocalDate. */
     def getLocalDate(index: Int): LocalDate = GetLocalDate(resultSet, index)

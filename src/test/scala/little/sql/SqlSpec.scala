@@ -46,13 +46,13 @@ class SqlSpec extends FlatSpec {
 
   it should "select record having one column with null value" in connector.withConnection { conn =>
     conn.foreach("select * from prog_lang") { rs =>
-      val id = rs.get[Option[Int]]("id")
-      val name = rs.get[Option[String]]("name")
-      val comments = rs.get[Option[String]]("comments")
+      val id = rs.getOrElse("id", 0)
+      val name = rs.getOrElse("name", "no name")
+      val comments = rs.getOrElse("comments", "no comments")
 
-      assert(id.isDefined)
-      assert(name.isDefined)
-      assert(!comments.isDefined)
+      assert(id != 0)
+      assert(name != "no name")
+      assert(comments == "no comments")
     }
   }
 
