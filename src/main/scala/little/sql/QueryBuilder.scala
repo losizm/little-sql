@@ -105,8 +105,8 @@ trait QueryBuilder {
   /**
    * Executes query and maps first row of result set using supplied function.
    *
-   * The function's return value is wrapped in {@code Some}. Or, if result set
-   * is empty, the function is not invoked and {@code None} is returned.
+   * The function's return value is wrapped in `Some`. Or, if result set is
+   * empty, the function is not invoked and `None` is returned.
    *
    * @param f function
    * @param conn connection to execute query

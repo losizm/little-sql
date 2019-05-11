@@ -19,8 +19,8 @@ import java.sql.ResultSet
 
 /**
  * Represents result of either update or query. If update, result can be
- * obtained via {@code count}; otherwise, if query, result can be obtained via
- * {@code resultSet}.
+ * obtained via `count`; otherwise, if query, result can be obtained via
+ * `resultSet`.
  *
  * @see [[Implicits.ConnectionType.execute ConnectionType.execute]],
  *  [[Implicits.StatementType.execute StatementType.execute]],
@@ -29,14 +29,14 @@ import java.sql.ResultSet
  */
 sealed abstract class Execution {
   /**
-   * Returns {@code true} if this execution represents result of update;
-   * otherwise, returns {@code false}.
+   * Returns `true` if this execution represents result of update;
+   * otherwise, returns `false`.
    */
   def isUpdate: Boolean
 
   /**
-   * Returns {@code true} if this execution represents result of query;
-   * otherwise, returns {@code false}.
+   * Returns `true` if this execution represents result of query;
+   * otherwise, returns `false`.
    */
   def isQuery: Boolean
 

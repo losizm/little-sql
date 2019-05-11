@@ -123,37 +123,37 @@ object Implicits {
     def apply(rs: ResultSet, index: Int): Byte = rs.getByte(index)
     def apply(rs: ResultSet, label: String): Byte = rs.getByte(label)
   }
- 
+
   /** Gets Int from ResultSet. */
   implicit object GetInt extends GetValue[Int] {
     def apply(rs: ResultSet, index: Int): Int = rs.getInt(index)
     def apply(rs: ResultSet, label: String): Int = rs.getInt(label)
   }
- 
+
   /** Gets Short from ResultSet. */
   implicit object GetShort extends GetValue[Short] {
     def apply(rs: ResultSet, index: Int): Short = rs.getShort(index)
     def apply(rs: ResultSet, label: String): Short = rs.getShort(label)
   }
- 
+
   /** Gets Long from ResultSet. */
   implicit object GetLong extends GetValue[Long] {
     def apply(rs: ResultSet, index: Int): Long = rs.getLong(index)
     def apply(rs: ResultSet, label: String): Long = rs.getLong(label)
   }
- 
+
   /** Gets Float from ResultSet. */
   implicit object GetFloat extends GetValue[Float] {
     def apply(rs: ResultSet, index: Int): Float = rs.getFloat(index)
     def apply(rs: ResultSet, label: String): Float = rs.getFloat(label)
   }
- 
+
   /** Gets Double from ResultSet. */
   implicit object GetDouble extends GetValue[Double] {
     def apply(rs: ResultSet, index: Int): Double = rs.getDouble(index)
     def apply(rs: ResultSet, label: String): Double = rs.getDouble(label)
   }
- 
+
   /** Gets BigDecimal from ResultSet. */
   implicit object GetBigDecimal extends GetValue[BigDecimal] {
     def apply(rs: ResultSet, index: Int): BigDecimal = rs.getBigDecimal(index)
@@ -196,7 +196,7 @@ object Implicits {
     def apply(rs: ResultSet, label: String): LocalDateTime = timestampToLocalDateTime(rs.getTimestamp(label))
   }
 
-  /** Provides extension methods to {@code javax.sql.DataSource}. */
+  /** Provides extension methods to `javax.sql.DataSource`. */
   implicit class DataSourceType(val dataSource: DataSource) extends AnyVal {
     /**
      * Creates Connection and passes it to supplied function. Connection is
@@ -230,7 +230,7 @@ object Implicits {
   }
 
   /**
-   * Provides extension methods to {@code java.sql.Connection}.
+   * Provides extension methods to `java.sql.Connection`.
    *
    * {{{
    * import little.sql._
@@ -370,8 +370,8 @@ object Implicits {
     /**
      * Executes query and maps first row of ResultSet using supplied function.
      *
-     * The function's return value is wrapped in {@code Some}. Or, if result set
-     * is empty, the function is not invoked and {@code None} is returned.
+     * The function's return value is wrapped in `Some`. Or, if result set is
+     * empty, the function is not invoked and `None` is returned.
      *
      * @param sql SQL query
      * @param params parameters
@@ -456,7 +456,7 @@ object Implicits {
   }
 
   /**
-   * Provides extension methods to {@code java.sql.Statement}.
+   * Provides extension methods to `java.sql.Statement`.
    *
    * @see [[PreparedStatementType]]
    */
@@ -478,7 +478,7 @@ object Implicits {
       }
 
     /**
-     * Executes query  and passes ResultSet to supplied function.
+     * Executes query and passes ResultSet to supplied function.
      *
      * @param sql SQL query
      * @param f function
@@ -501,8 +501,8 @@ object Implicits {
     /**
      * Executes query and maps first row of ResultSet using supplied function.
      *
-     * The function's return value is wrapped in {@code Some}. Or, if result set
-     * is empty, the function is not invoked and {@code None} is returned.
+     * The function's return value is wrapped in `Some`. Or, if result set is
+     * empty, the function is not invoked and `None` is returned.
      *
      * @param sql SQL query
      * @param f function
@@ -542,7 +542,7 @@ object Implicits {
   }
 
   /**
-   * Provides extension methods to {@code java.sql.PreparedStatement}.
+   * Provides extension methods to `java.sql.PreparedStatement`.
    *
    * @see [[StatementType]]
    */
@@ -641,8 +641,8 @@ object Implicits {
      * Executes query with parameters and maps first row of ResultSet using
      * supplied function.
      *
-     * The function's return value is wrapped in {@code Some}. Or, if result set
-     * is empty, the function is not invoked and {@code None} is returned.
+     * The function's return value is wrapped in `Some`. Or, if result set is
+     * empty, the function is not invoked and `None` is returned.
      *
      * @param params parameters
      * @param f map function
@@ -674,7 +674,7 @@ object Implicits {
       }
 
     /**
-     * Sets parameter to given {@code LocalDate}.
+     * Sets parameter to given `LocalDate`.
      *
      * @param index parameter index
      * @param value parameter value
@@ -683,7 +683,7 @@ object Implicits {
       statement.setDate(index, Date.valueOf(value))
 
     /**
-     * Sets parameter to given {@code LocalTime}.
+     * Sets parameter to given `LocalTime`.
      *
      * @param index parameter index
      * @param value parameter value
@@ -692,7 +692,7 @@ object Implicits {
       statement.setTime(index, Time.valueOf(value))
 
     /**
-     * Sets parameter to given {@code LocalDateTime}.
+     * Sets parameter to given `LocalDateTime`.
      *
      * @param index parameter index
      * @param value parameter value
@@ -709,7 +709,7 @@ object Implicits {
     }
   }
 
-  /** Provides extension methods to {@code java.sql.ResultSet}. */
+  /** Provides extension methods to `java.sql.ResultSet`. */
   implicit class ResultSetType(val resultSet: ResultSet) extends AnyVal {
     /** Gets column count. */
     def getColumnCount(): Int = resultSet.getMetaData.getColumnCount
@@ -812,7 +812,7 @@ object Implicits {
     def getLocalDateTime(label: String): LocalDateTime = GetLocalDateTime(resultSet, label)
 
     /**
-     * Invokes supplied function for next each row of ResultSet.
+     * Invokes supplied function for each remaining row of ResultSet.
      *
      * @param f function
      */
@@ -823,9 +823,9 @@ object Implicits {
     /**
      * Maps next row of ResultSet using supplied function.
      *
-     * The function's return value is wrapped in {@code Some}. Or, if there are
-     * no more rows in result set, the function is not invoked and {@code None}
-     * is returned.
+     * The function's return value is wrapped in `Some`. Or, if there are no
+     * more rows in result set, the function is not invoked and `None` is
+     * returned.
      *
      * @param f map function
      */
@@ -835,7 +835,7 @@ object Implicits {
       else None
 
     /**
-     * Maps next and all subsequent rows of ResultSet using supplied function.
+     * Maps remaining rows of ResultSet using supplied function.
      *
      * @param f map function
      */
@@ -843,8 +843,8 @@ object Implicits {
       fold(new ListBuffer[T]) { _ += f(_) }
 
     /**
-     * Maps next and all subsequent rows of ResultSet building a collection
-     * using elements returned from map function.
+     * Maps remaining rows of ResultSet building a collection using elements
+     * returned from map function.
      *
      * @param f map function
      */
@@ -855,8 +855,8 @@ object Implicits {
       }
 
     /**
-     * Folds ResultSet to single value using given initial value and binary
-     * operator.
+     * Folds remaining rows of ResultSet to single value using given initial
+     * value and binary operator.
      *
      * @param init initial value
      * @param op binary operator
