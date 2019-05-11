@@ -370,8 +370,9 @@ object Implicits {
     /**
      * Executes query and maps first row of ResultSet using supplied function.
      *
-     * The function's return value is wrapped in `Some`. Or, if result set is
-     * empty, the function is not invoked and `None` is returned.
+     * If the result set is not empty, and if the supplied function's return
+     * value is not null, then `Some` value is returned; otherwise, `None` is
+     * returned.
      *
      * @param sql SQL query
      * @param params parameters
@@ -501,14 +502,17 @@ object Implicits {
     /**
      * Executes query and maps first row of ResultSet using supplied function.
      *
-     * The function's return value is wrapped in `Some`. Or, if result set is
-     * empty, the function is not invoked and `None` is returned.
+     * If the result set is not empty, and if the supplied function's return
+     * value is not null, then `Some` value is returned; otherwise, `None` is
+     * returned.
      *
      * @param sql SQL query
      * @param f function
      */
-    def first[T](sql: String)(f: ResultSet => T): Option[T] =
+    def first[T](sql: String)(f: ResultSet => T): Option[T] = {
+      Try(statement.setMaxRows(1))
       query(sql) { _.next(f) }
+    }
 
     /**
      * Executes query and maps each row of ResultSet using supplied function.
@@ -641,14 +645,17 @@ object Implicits {
      * Executes query with parameters and maps first row of ResultSet using
      * supplied function.
      *
-     * The function's return value is wrapped in `Some`. Or, if result set is
-     * empty, the function is not invoked and `None` is returned.
+     * If the result set is not empty, and if the supplied function's return
+     * value is not null, then `Some` value is returned; otherwise, `None` is
+     * returned.
      *
      * @param params parameters
      * @param f map function
      */
-    def first[T](params: Seq[InParam])(f: ResultSet => T): Option[T] =
+    def first[T](params: Seq[InParam])(f: ResultSet => T): Option[T] = {
+      Try(statement.setMaxRows(1))
       query(params) { _.next(f) }
+    }
 
     /**
      * Executes query with parameters and maps each row of ResultSet using
@@ -773,7 +780,7 @@ object Implicits {
 
       resultSet.wasNull match {
         case true  => None
-        case false => Some(value)
+        case false => Option(value)
       }
     }
 
@@ -789,7 +796,7 @@ object Implicits {
 
       resultSet.wasNull match {
         case true  => None
-        case false => Some(value)
+        case false => Option(value)
       }
     }
 
@@ -823,15 +830,15 @@ object Implicits {
     /**
      * Maps next row of ResultSet using supplied function.
      *
-     * The function's return value is wrapped in `Some`. Or, if there are no
-     * more rows in result set, the function is not invoked and `None` is
+     * If the result set has another row, and if the supplied function's return
+     * value is not null, then `Some` value is returned; otherwise, `None` is
      * returned.
      *
      * @param f map function
      */
     def next[T](f: ResultSet => T): Option[T] =
       if (resultSet.next())
-        Some(f(resultSet))
+        Option(f(resultSet))
       else None
 
     /**

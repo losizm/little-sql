@@ -105,8 +105,9 @@ trait QueryBuilder {
   /**
    * Executes query and maps first row of result set using supplied function.
    *
-   * The function's return value is wrapped in `Some`. Or, if result set is
-   * empty, the function is not invoked and `None` is returned.
+   * If the result set is not empty, and if the supplied function's return
+   * value is not null, then `Some` value is returned; otherwise, `None` is
+   * returned.
    *
    * @param f function
    * @param conn connection to execute query
@@ -195,7 +196,7 @@ private case class QueryBuilderImpl(sql: String, params: Seq[InParam] = Nil, que
     }
 
   def first[T](f: ResultSet => T)(implicit conn: Connection): Option[T] =
-    withResultSet { rs =>
+    maxRows(1).withResultSet { rs =>
       if (rs.next())
         Option(f(rs))
       else None
