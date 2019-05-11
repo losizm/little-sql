@@ -79,7 +79,7 @@ object Implicits {
     value.map(toInParam).getOrElse(InParam.NULL)
 
   /** Converts Any to InParam. */
-  implicit def anyToParam(value: Any): InParam =
+  implicit def anyToInParam(value: Any): InParam =
     value match {
       case null             => InParam.NULL
       case x: String        => InParam(x)
@@ -97,13 +97,13 @@ object Implicits {
       case x: LocalDate     => InParam(x)
       case x: LocalTime     => InParam(x)
       case x: LocalDateTime => InParam(x)
-      case x: Option[_]     => anyToParam(x.getOrElse(null))
+      case x: Option[_]     => anyToInParam(x.getOrElse(null))
       case x: InParam       => x
       case x: Any           => throw new IllegalArgumentException(s"Cannot convert instance of ${x.getClass.getName} to little.sql.InParam")
     }
 
   /** Converts Seq[T] to Seq[InParam]. */
-  implicit def seqToParams[T](values: Seq[T])(implicit toInParam: T => InParam): Seq[InParam] =
+  implicit def seqToInParams[T](values: Seq[T])(implicit toInParam: T => InParam): Seq[InParam] =
     values.map(toInParam)
 
   /** Gets String from ResultSet. */
