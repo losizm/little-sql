@@ -1,5 +1,5 @@
 name := "little-sql"
-version := "0.8.0"
+version := "0.8.1"
 organization := "com.github.losizm"
   
 scalaVersion := "2.12.8"
