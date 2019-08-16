@@ -196,7 +196,7 @@ object Implicits {
   }
 
   /** Provides extension methods to `javax.sql.DataSource`. */
-  implicit class DataSourceType(val dataSource: DataSource) extends AnyVal {
+  implicit class DataSourceType(private val dataSource: DataSource) extends AnyVal {
     /**
      * Creates Connection and passes it to supplied function. Connection is
      * closed on function's return.
@@ -259,7 +259,7 @@ object Implicits {
    * }
    * }}}
    */
-  implicit class ConnectionType(val connection: Connection) extends AnyVal {
+  implicit class ConnectionType(private val connection: Connection) extends AnyVal {
     /**
      * Executes SQL and passes Execution to supplied function.
      *
@@ -460,7 +460,7 @@ object Implicits {
    *
    * @see [[PreparedStatementType]]
    */
-  implicit class StatementType(val statement: Statement) extends AnyVal {
+  implicit class StatementType(private val statement: Statement) extends AnyVal {
     /**
      * Executes SQL and passes Execution to supplied function.
      *
@@ -549,7 +549,7 @@ object Implicits {
    *
    * @see [[StatementType]]
    */
-  implicit class PreparedStatementType(val statement: PreparedStatement) extends AnyVal {
+  implicit class PreparedStatementType(private val statement: PreparedStatement) extends AnyVal {
     /**
      * Executes statement with parameters and passes Execution to supplied
      * function.
@@ -716,7 +716,7 @@ object Implicits {
   }
 
   /** Provides extension methods to `java.sql.ResultSet`. */
-  implicit class ResultSetType(val resultSet: ResultSet) extends AnyVal {
+  implicit class ResultSetType(private val resultSet: ResultSet) extends AnyVal {
     /** Gets column count. */
     def getColumnCount(): Int = resultSet.getMetaData.getColumnCount
 
