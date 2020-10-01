@@ -719,13 +719,12 @@ object Implicits {
   /** Provides extension methods to `java.sql.ResultSet`. */
   implicit class ResultSetType(private val resultSet: ResultSet) extends AnyVal {
     /** Gets column count. */
-    def getColumnCount(): Int = resultSet.getMetaData.getColumnCount
+    def getColumnCount(): Int = resultSet.getMetaData.getColumnCount()
 
     /** Gets column labels. */
     def getColumnLabels(): Seq[String] = {
-      val columnCount = getColumnCount
-      val metaData = resultSet.getMetaData
-      ((1 to columnCount) map { metaData getColumnLabel _ }).toSeq
+      val metaData = resultSet.getMetaData()
+      (1 to getColumnCount()).map(metaData.getColumnLabel).toSeq
     }
 
     /**
