@@ -1,7 +1,11 @@
-name := "little-sql"
-version := "0.11.0-SNAPSHOT"
 organization := "com.github.losizm"
+name         := "little-sql"
+version      := "0.11.0"
   
+description  := "The Scala library that provides extension methods to java.sql"
+homepage     := Some(url("https://github.com/losizm/little-sql"))
+licenses     := List("Apache License, Version 2" -> url("http://www.apache.org/licenses/LICENSE-2.0.txt"))
+
 scalaVersion := "2.13.3"
 crossScalaVersions := Seq("2.12.12")
 
@@ -17,8 +21,8 @@ unmanagedSourceDirectories in Compile += {
 }
 
 libraryDependencies ++= Seq(
-  "com.h2database"  %  "h2"        % "1.4.199" % "test",
-  "org.scalatest"   %% "scalatest" % "3.0.8"   % "test"
+  "com.h2database" %  "h2"        % "1.4.199" % "test",
+  "org.scalatest"  %% "scalatest" % "3.0.8"   % "test"
 )
 
 scmInfo := Some(
@@ -37,16 +41,14 @@ developers := List(
   )
 )
 
-description := "The Scala library that provides extension methods to java.sql"
-licenses := List("Apache License, Version 2" -> url("http://www.apache.org/licenses/LICENSE-2.0.txt"))
-homepage := Some(url("https://github.com/losizm/little-sql"))
-
 pomIncludeRepository := { _ => false }
 
 publishTo := {
   val nexus = "https://oss.sonatype.org"
-  if (isSnapshot.value) Some("snaphsots" at s"$nexus/content/repositories/snapshots")
-  else Some("releases" at s"$nexus/service/local/staging/deploy/maven2")
+  isSnapshot.value match {
+    case true  => Some("snaphsots" at s"$nexus/content/repositories/snapshots")
+    case false => Some("releases" at s"$nexus/service/local/staging/deploy/maven2")
+  }
 }
 
 publishMavenStyle := true

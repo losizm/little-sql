@@ -2,14 +2,14 @@
 
 The Scala library that provides extension methods to _java.sql_.
 
-[![Maven Central](https://img.shields.io/maven-central/v/com.github.losizm/little-sql_2.12.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22com.github.losizm%22%20AND%20a:%22little-sql_2.12%22)
+[![Maven Central](https://img.shields.io/maven-central/v/com.github.losizm/little-sql_2.13.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22com.github.losizm%22%20AND%20a:%22little-sql_2.13%22)
 
 ## Getting Started
 
 To use **little-sql**, add it as a dependency to your project:
 
 ```scala
-libraryDependencies += "com.github.losizm" %% "little-sql" % "0.10.0"
+libraryDependencies += "com.github.losizm" %% "little-sql" % "0.11.0"
 ```
 
 ## A Taste of little-sql
