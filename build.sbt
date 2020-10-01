@@ -3,9 +3,14 @@ version := "0.11.0-SNAPSHOT"
 organization := "com.github.losizm"
   
 scalaVersion := "2.13.3"
+crossScalaVersions := Seq("2.12.12")
+
 scalacOptions ++= Seq("-deprecation", "-feature", "-Xcheckinit")
 
-crossScalaVersions := Seq("2.12.12")
+Compile / doc / scalacOptions ++= Seq(
+  "-doc-title", name.value,
+  "-doc-version", version.value
+)
 
 unmanagedSourceDirectories in Compile += {
   (sourceDirectory in Compile).value / s"scala-${scalaBinaryVersion.value}"
@@ -45,4 +50,3 @@ publishTo := {
 }
 
 publishMavenStyle := true
-
