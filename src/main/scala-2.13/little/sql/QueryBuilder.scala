@@ -50,7 +50,11 @@ trait QueryBuilder {
   def params: Seq[InParam]
 
   /** Sets parameters. */
-  def params(values: InParam*): QueryBuilder
+  def params(values: Seq[InParam]): QueryBuilder
+
+  /** Sets parameters. */
+  def params(one: InParam, more: InParam*): QueryBuilder =
+    params(one +: more)
 
   /** Gets query timeout. */
   def queryTimeout: Int
@@ -154,7 +158,7 @@ object QueryBuilder {
 private case class QueryBuilderImpl(sql: String, params: Seq[InParam] = Nil, queryTimeout: Int = 0, maxRows: Int = 0, fetchSize: Int = 0) extends QueryBuilder {
   require(sql != null)
 
-  def params(values: InParam*): QueryBuilder =
+  def params(values: Seq[InParam]): QueryBuilder =
     copy(params = values)
 
   def queryTimeout(value: Int): QueryBuilder =

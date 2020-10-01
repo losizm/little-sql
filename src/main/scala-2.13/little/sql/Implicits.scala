@@ -273,7 +273,7 @@ object Implicits {
      */
     def execute[T](sql: String, params: Seq[InParam] = Nil, queryTimeout: Int = 0, maxRows: Int = 0, fetchSize: Int = 0)(f: Execution => T): T =
       QueryBuilder(sql)
-        .params(params : _*)
+        .params(params)
         .queryTimeout(queryTimeout)
         .maxRows(maxRows)
         .fetchSize(fetchSize)
@@ -292,7 +292,7 @@ object Implicits {
      */
     def query[T](sql: String, params: Seq[InParam] = Nil, queryTimeout: Int = 0, maxRows: Int = 0, fetchSize: Int = 0)(f: ResultSet => T): T =
       QueryBuilder(sql)
-        .params(params : _*)
+        .params(params)
         .queryTimeout(queryTimeout)
         .maxRows(maxRows)
         .fetchSize(fetchSize)
@@ -307,7 +307,7 @@ object Implicits {
      */
     def update(sql: String, params: Seq[InParam] = Nil, queryTimeout: Int = 0): Long =
       QueryBuilder(sql)
-        .params(params : _*)
+        .params(params)
         .queryTimeout(queryTimeout)
         .getUpdateCount(connection)
 
@@ -361,7 +361,7 @@ object Implicits {
      */
     def foreach(sql: String, params: Seq[InParam] = Nil, queryTimeout: Int = 0, maxRows: Int = 0, fetchSize: Int = 0)(f: ResultSet => Unit): Unit =
       QueryBuilder(sql)
-        .params(params : _*)
+        .params(params)
         .queryTimeout(queryTimeout)
         .maxRows(maxRows)
         .fetchSize(fetchSize)
@@ -383,7 +383,7 @@ object Implicits {
      */
     def first[T](sql: String, params: Seq[InParam] = Nil, queryTimeout: Int = 0)(f: ResultSet => T): Option[T] =
       QueryBuilder(sql)
-        .params(params : _*)
+        .params(params)
         .queryTimeout(queryTimeout)
         .first(f)(connection)
 
@@ -400,7 +400,7 @@ object Implicits {
      */
     def map[T](sql: String, params: Seq[InParam] = Nil, queryTimeout: Int = 0, maxRows: Int = 0, fetchSize: Int = 0)(f: ResultSet => T): Seq[T] =
       QueryBuilder(sql)
-        .params(params : _*)
+        .params(params)
         .queryTimeout(queryTimeout)
         .maxRows(maxRows)
         .fetchSize(fetchSize)
@@ -420,7 +420,7 @@ object Implicits {
      */
     def flatMap[T](sql: String, params: Seq[InParam] = Nil, queryTimeout: Int = 0, maxRows: Int = 0, fetchSize: Int = 0)(f: ResultSet => Iterable[T]): Seq[T] =
       QueryBuilder(sql)
-        .params(params : _*)
+        .params(params)
         .queryTimeout(queryTimeout)
         .maxRows(maxRows)
         .fetchSize(fetchSize)
