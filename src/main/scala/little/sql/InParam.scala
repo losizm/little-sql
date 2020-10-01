@@ -35,7 +35,7 @@ trait InParam {
 /** Provides factory methods for InParam. */
 object InParam {
   /** General-purpose instance of null input parameter. */
-  val NULL: InParam = InParamImpl(null, true, Types.VARCHAR)
+  val NULL: InParam = InParamImpl(null, true, Types.NULL)
 
   /**
    * Creates InParam with supplied properties.

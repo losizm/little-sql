@@ -231,7 +231,7 @@ private case class QueryBuilderImpl(sql: String, params: Seq[InParam] = Nil, que
     try {
       params.zipWithIndex.foreach {
         case (null, index) =>
-          stmt.setNull(index + 1, Types.VARCHAR)
+          stmt.setNull(index + 1, Types.NULL)
         case (param, index) =>
           param.isNull match {
             case true  => stmt.setNull(index + 1, param.sqlType)

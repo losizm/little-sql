@@ -273,7 +273,8 @@ object Implicits {
      * @param f function
      */
     def execute[T](sql: String, params: Seq[InParam] = Nil, queryTimeout: Int = 0, maxRows: Int = 0, fetchSize: Int = 0)(f: Execution => T): T =
-      QueryBuilder(sql).params(params : _*)
+      QueryBuilder(sql)
+        .params(params : _*)
         .queryTimeout(queryTimeout)
         .maxRows(maxRows)
         .fetchSize(fetchSize)
@@ -603,7 +604,7 @@ object Implicits {
      */
     def set(index: Int, value: InParam): Unit =
       if (value == null)
-        statement.setNull(index, Types.VARCHAR)
+        statement.setNull(index, Types.NULL)
       else
         value.isNull match {
           case true  => statement.setNull(index, value.sqlType)
