@@ -20,7 +20,6 @@ import java.time.{ LocalDate, LocalDateTime, LocalTime }
 
 import javax.sql.DataSource
 
-import scala.collection.GenTraversableOnce
 import scala.collection.mutable.ListBuffer
 import scala.language.{ higherKinds, implicitConversions }
 import scala.util.Try
@@ -76,12 +75,12 @@ object Implicits {
 
   /** Converts Option[T] to InParam. */
   implicit def optionToInParam[T](value: Option[T])(implicit toInParam: T => InParam) =
-    value.map(toInParam).getOrElse(InParam.NULL)
+    value.map(toInParam).getOrElse(InParam.Null)
 
   /** Converts Any to InParam. */
   implicit def anyToInParam(value: Any): InParam =
     value match {
-      case null             => InParam.NULL
+      case null             => InParam.Null
       case x: String        => InParam(x)
       case x: Boolean       => InParam(x)
       case x: Byte          => InParam(x)
@@ -103,8 +102,16 @@ object Implicits {
     }
 
   /** Converts Seq[T] to Seq[InParam]. */
-  implicit def seqToInParams[T](values: Seq[T])(implicit toInParam: T => InParam): Seq[InParam] =
+  implicit def seqToSeqInParam[T](values: Seq[T])(implicit toInParam: T => InParam): Seq[InParam] =
     values.map(toInParam)
+
+  /** Converts Map[T] to Seq[InParam]. */
+  implicit def mapToMapInParam[T](values: Map[String, T])(implicit toInParam: T => InParam): Map[String, InParam] =
+    values.map { case (name, value) => name -> toInParam(value) }
+
+  /** Converts Map[T] to Seq[InParam]. */
+  implicit def tupleToTupleInParam[T](value: (String, T))(implicit toInParam: T => InParam): (String, InParam) =
+    value._1 -> toInParam(value._2)
 
   /** Gets String from ResultSet. */
   implicit object GetString extends GetValue[String] {
@@ -317,7 +324,7 @@ object Implicits {
      *
      * @param generator SQL generator
      */
-    def batch(generator: () => GenTraversableOnce[String]): Array[Int] = {
+    def batch(generator: () => Iterable[String]): Array[Int] = {
       val stmt = connection.createStatement()
 
       try {
@@ -338,7 +345,7 @@ object Implicits {
      * @param sql SQL from which prepared statement is created
      * @param generator parameter value generator
      */
-    def batch(sql: String)(generator: () => GenTraversableOnce[Seq[InParam]]): Array[Int] = {
+    def batch(sql: String)(generator: () => Iterable[Seq[InParam]]): Array[Int] = {
       val stmt = connection.prepareStatement(sql)
 
       try {
@@ -419,7 +426,7 @@ object Implicits {
      *   from database
      * @param f map function
      */
-    def flatMap[T](sql: String, params: Seq[InParam] = Nil, queryTimeout: Int = 0, maxRows: Int = 0, fetchSize: Int = 0)(f: ResultSet => GenTraversableOnce[T]): Seq[T] =
+    def flatMap[T](sql: String, params: Seq[InParam] = Nil, queryTimeout: Int = 0, maxRows: Int = 0, fetchSize: Int = 0)(f: ResultSet => Iterable[T]): Seq[T] =
       QueryBuilder(sql)
         .params(params)
         .queryTimeout(queryTimeout)
@@ -523,7 +530,7 @@ object Implicits {
      * @param f map function
      */
     def map[T](sql: String)(f: ResultSet => T): Seq[T] =
-      fold(sql)(new ListBuffer[T]) { _ += f(_) }
+      fold(sql)(new ListBuffer[T]) { _ += f(_) }.toSeq
 
     /**
      * Executes query and builds a collection using the elements mapped from
@@ -533,11 +540,11 @@ object Implicits {
      * @param params parameters
      * @param f map function
      */
-    def flatMap[T](sql: String)(f: ResultSet => GenTraversableOnce[T]): Seq[T] =
+    def flatMap[T](sql: String)(f: ResultSet => Iterable[T]): Seq[T] =
       fold(sql)(new ListBuffer[T]) { (buf, rs) =>
         f(rs).foreach(buf.+=)
         buf
-      }
+      }.toSeq
 
     private def fold[T](sql: String)(z: T)(op: (T, ResultSet) => T): T = {
       val rs = statement.executeQuery(sql)
@@ -666,7 +673,7 @@ object Implicits {
      * @param f map function
      */
     def map[T](params: Seq[InParam])(f: ResultSet => T): Seq[T] =
-      fold(params)(new ListBuffer[T]) {_ += f(_) }
+      fold(params)(new ListBuffer[T]) {_ += f(_) }.toSeq
 
     /**
      * Executes query and builds a collection using the elements mapped from
@@ -675,11 +682,11 @@ object Implicits {
      * @param params parameters
      * @param f map function
      */
-    def flatMap[T](params: Seq[InParam])(f: ResultSet => GenTraversableOnce[T]): Seq[T] =
+    def flatMap[T](params: Seq[InParam])(f: ResultSet => Iterable[T]): Seq[T] =
       fold(params)(new ListBuffer[T]) { (buf, rs) =>
         f(rs).foreach(buf.+=)
         buf
-      }
+      }.toSeq
 
     /**
      * Sets parameter to given `LocalDate`.
@@ -847,7 +854,7 @@ object Implicits {
      * @param f map function
      */
     def map[T](f: ResultSet => T): Seq[T] =
-      fold(new ListBuffer[T]) { _ += f(_) }
+      fold(new ListBuffer[T]) { _ += f(_) }.toSeq
 
     /**
      * Maps remaining rows of ResultSet building a collection using elements
@@ -855,11 +862,11 @@ object Implicits {
      *
      * @param f map function
      */
-    def flatMap[T](f: ResultSet => GenTraversableOnce[T]): Seq[T] =
+    def flatMap[T](f: ResultSet => Iterable[T]): Seq[T] =
       fold(new ListBuffer[T]) { (buf, rs) =>
         f(rs).foreach(buf.+=)
         buf
-      }
+      }.toSeq
 
     /**
      * Folds remaining rows of ResultSet to single value using given initial

@@ -17,7 +17,6 @@ package little.sql
 
 import java.sql.{ Connection, PreparedStatement, ResultSet, Types }
 
-import scala.collection.GenTraversableOnce
 import scala.collection.mutable.ListBuffer
 import scala.util.Try
 
@@ -37,10 +36,15 @@ import scala.util.Try
  * implicit val conn: Connection = ???
  *
  * QueryBuilder("select * from users where group = ? and enabled = ?")
- *  .params("staff", true) // Set input parameter values
- *  .maxRows(10) // Limit result set to 10 rows
- *  .foreach { rs => printf(s"uid=%d%n", rs.getInt("id")) } // Use implicit connection
+ *   .params("staff", true) // Set input parameter values
+ *   .maxRows(10) // Limit result set to 10 rows
+ *   .foreach { rs => printf(s"uid=%d%n", rs.getInt("id")) } // Use implicit connection
  *
+ * // Same as above except use map of parameters
+ * QueryBuilder("select * from users where group = \${group} and enabled = \${enabled}")
+ *   .params("group" -> "staff", "enabled" -> true)
+ *   .maxRows(10)
+ *   .foreach { rs => printf(s"uid=%d%n", rs.getInt("id")) }
  * }}}
  */
 trait QueryBuilder {
@@ -56,6 +60,13 @@ trait QueryBuilder {
   /** Sets parameters. */
   def params(one: InParam, more: InParam*): QueryBuilder =
     params(one +: more)
+
+  /** Sets parameters using mapped values. */
+  def params(values: Map[String, InParam]): QueryBuilder
+
+  /** Sets parameters using mapped values. */
+  def params(one: (String, InParam), more: (String, InParam)*): QueryBuilder =
+    params((one +: more).toMap)
 
   /** Gets query timeout. */
   def queryTimeout: Int
@@ -133,7 +144,7 @@ trait QueryBuilder {
    * @param f map function
    * @param conn connection to execute query
    */
-  def flatMap[T](f: ResultSet => GenTraversableOnce[T])(implicit conn: Connection): Seq[T]
+  def flatMap[T](f: ResultSet => Iterable[T])(implicit conn: Connection): Seq[T]
 
   /**
    * Executes query and folds result set to single value using given initial
@@ -156,11 +167,29 @@ object QueryBuilder {
   def apply(sql: String): QueryBuilder = QueryBuilderImpl(sql)
 }
 
-private case class QueryBuilderImpl(sql: String, params: Seq[InParam] = Nil, queryTimeout: Int = 0, maxRows: Int = 0, fetchSize: Int = 0) extends QueryBuilder {
+private case class QueryBuilderImpl(
+  sql:          String,
+  params:       Seq[InParam] = Nil,
+  queryTimeout: Int          = 0,
+  maxRows:      Int          = 0,
+  fetchSize:    Int          = 0) extends QueryBuilder {
+
   require(sql != null)
 
   def params(values: Seq[InParam]): QueryBuilder =
     copy(params = values)
+
+  def params(values: Map[String, InParam]): QueryBuilder = {
+    val vars = """\$\{\s*(\w+)\s*\}""".r
+
+    copy(
+      sql    = vars.replaceAllIn(sql, "?"),
+      params = vars.findAllMatchIn(sql)
+        .map(_.group(1))
+        .map(values(_))
+        .toSeq
+    )
+  }
 
   def queryTimeout(value: Int): QueryBuilder =
     copy(queryTimeout = value)
@@ -212,15 +241,15 @@ private case class QueryBuilderImpl(sql: String, params: Seq[InParam] = Nil, que
       while (rs.next())
         values += f(rs)
       values
-    }
+    }.toSeq
 
-  def flatMap[T](f: ResultSet => GenTraversableOnce[T])(implicit conn: Connection): Seq[T] =
+  def flatMap[T](f: ResultSet => Iterable[T])(implicit conn: Connection): Seq[T] =
     withResultSet { rs =>
       val values = new ListBuffer[T]
       while (rs.next())
         f(rs).foreach(values.+=)
       values
-    }
+    }.toSeq
 
   def fold[T](init: T)(op: (T, ResultSet) => T)(implicit conn: Connection): T =
     withResultSet { rs =>
@@ -252,4 +281,3 @@ private case class QueryBuilderImpl(sql: String, params: Seq[InParam] = Nil, que
     } finally Try(stmt.close())
   }
 }
-

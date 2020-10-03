@@ -34,8 +34,12 @@ trait InParam {
 
 /** Provides factory methods for InParam. */
 object InParam {
-  /** General-purpose instance of null input parameter. */
-  val NULL: InParam = InParamImpl(null, true, Types.NULL)
+  /** Represents general-purpose instance of null input parameter. */
+  object Null extends InParam {
+    val value   = null
+    val isNull  = true
+    val sqlType = Types.NULL
+  }
 
   /**
    * Creates InParam with supplied properties.
@@ -105,4 +109,3 @@ object InParam {
 }
 
 private case class InParamImpl(value: Any, isNull: Boolean, sqlType: Int) extends InParam
-

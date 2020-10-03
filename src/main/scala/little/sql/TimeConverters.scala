@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Carlos Conyers
+ * Copyright 2020 Carlos Conyers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,16 +19,27 @@ import java.sql.{ Date, Time, Timestamp }
 import java.time.{ LocalDate, LocalDateTime, LocalTime }
 
 private object TimeConverters {
-  // java.sql.Date <=> java.time.LocalDate
-  def dateToLocalDate(value: Date): LocalDate = if (value != null) value.toLocalDate else null
-  def localDateToDate(value: LocalDate): Date = if (value != null) Date.valueOf(value) else null
+  // Date => LocalDate
+  def dateToLocalDate(value: Date): LocalDate =
+    if (value != null) value.toLocalDate else null
 
-  // java.sql.Time <=> java.time.LocalTime
-  def timeToLocalTime(value: Time): LocalTime = if (value != null) value.toLocalTime else null
-  def localTimeToTime(value: LocalTime): Time = if (value != null) Time.valueOf(value) else null
+  // LocalDate => Date
+  def localDateToDate(value: LocalDate): Date =
+    if (value != null) Date.valueOf(value) else null
 
-  // java.sql.Timestamp <=> java.time.LocalDateTime
-  def timestampToLocalDateTime(value: Timestamp): LocalDateTime = if (value != null) value.toLocalDateTime else null
-  def localDateTimeToTimestamp(value: LocalDateTime): Timestamp = if (value != null) Timestamp.valueOf(value) else null
+  // Time => LocalTime
+  def timeToLocalTime(value: Time): LocalTime =
+    if (value != null) value.toLocalTime else null
+
+  // LocalTime => Time
+  def localTimeToTime(value: LocalTime): Time =
+    if (value != null) Time.valueOf(value) else null
+
+  // Timestamp => LocalDateTime
+  def timestampToLocalDateTime(value: Timestamp): LocalDateTime =
+    if (value != null) value.toLocalDateTime else null
+
+  // LocalDateTime => Timestamp
+  def localDateTimeToTimestamp(value: LocalDateTime): Timestamp =
+    if (value != null) Timestamp.valueOf(value) else null
 }
-
