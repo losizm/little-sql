@@ -157,14 +157,15 @@ trait QueryBuilder {
   def fold[T](init: T)(op: (T, ResultSet) => T)(implicit conn: Connection): T
 }
 
-/** Provides factory method for QueryBuilder. */
+/** Provides QueryBuilder factory. */
 object QueryBuilder {
   /**
    * Creates QueryBuilder initialized with supplied SQL.
    *
    * @param sql SQL with which to initialize query builder
    */
-  def apply(sql: String): QueryBuilder = QueryBuilderImpl(sql)
+  def apply(sql: String): QueryBuilder =
+    QueryBuilderImpl(sql)
 }
 
 private case class QueryBuilderImpl(
@@ -230,9 +231,10 @@ private case class QueryBuilderImpl(
 
   def first[T](f: ResultSet => T)(implicit conn: Connection): Option[T] =
     maxRows(1).withResultSet { rs =>
-      if (rs.next())
-        Option(f(rs))
-      else None
+      rs.next() match {
+        case true  => Option(f(rs))
+        case false => None
+      }
     }
 
   def map[T](f: ResultSet => T)(implicit conn: Connection): Seq[T] =
@@ -273,9 +275,14 @@ private case class QueryBuilderImpl(
           }
       }
 
-      if (queryTimeout > 0) Try(stmt.setQueryTimeout(queryTimeout))
-      if (maxRows > 0) stmt.setMaxRows(maxRows)
-      if (fetchSize > 0) stmt.setFetchSize(maxRows)
+      if (queryTimeout > 0)
+        Try(stmt.setQueryTimeout(queryTimeout))
+
+      if (maxRows > 0)
+        stmt.setMaxRows(maxRows)
+
+      if (fetchSize > 0)
+        stmt.setFetchSize(maxRows)
 
       f(stmt)
     } finally Try(stmt.close())

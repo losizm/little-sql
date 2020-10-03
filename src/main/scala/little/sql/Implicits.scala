@@ -727,7 +727,8 @@ object Implicits {
   /** Provides extension methods to `java.sql.ResultSet`. */
   implicit class ResultSetType(private val resultSet: ResultSet) extends AnyVal {
     /** Gets column count. */
-    def getColumnCount(): Int = resultSet.getMetaData.getColumnCount()
+    def getColumnCount(): Int =
+      resultSet.getMetaData.getColumnCount()
 
     /** Gets column labels. */
     def getColumnLabels(): Seq[String] = {
@@ -742,7 +743,8 @@ object Implicits {
      *
      * @param index column index
      */
-    def get[T](index: Int)(implicit getValue: GetValueByIndex[T]): T = getValue(resultSet, index)
+    def get[T](index: Int)(implicit getValue: GetValueByIndex[T]): T =
+      getValue(resultSet, index)
 
     /**
      * Gets column value in current row.
@@ -751,7 +753,8 @@ object Implicits {
      *
      * @param label column label
      */
-    def get[T](label: String)(implicit getValue: GetValueByLabel[T]): T = getValue(resultSet, label)
+    def get[T](label: String)(implicit getValue: GetValueByLabel[T]): T =
+      getValue(resultSet, label)
 
     /**
      * Gets column value in current row, or returns default if value is null.
@@ -808,22 +811,28 @@ object Implicits {
     }
 
     /** Gets column value as LocalDate. */
-    def getLocalDate(index: Int): LocalDate = GetLocalDate(resultSet, index)
+    def getLocalDate(index: Int): LocalDate =
+      GetLocalDate(resultSet, index)
 
     /** Gets column value as LocalTime. */
-    def getLocalTime(index: Int): LocalTime = GetLocalTime(resultSet, index)
+    def getLocalTime(index: Int): LocalTime =
+      GetLocalTime(resultSet, index)
 
     /** Gets column value as LocalDateTime. */
-    def getLocalDateTime(index: Int): LocalDateTime = GetLocalDateTime(resultSet, index)
+    def getLocalDateTime(index: Int): LocalDateTime =
+      GetLocalDateTime(resultSet, index)
 
     /** Gets column value as LocalDate. */
-    def getLocalDate(label: String): LocalDate = GetLocalDate(resultSet, label)
+    def getLocalDate(label: String): LocalDate =
+      GetLocalDate(resultSet, label)
 
     /** Gets column value as LocalTime. */
-    def getLocalTime(label: String): LocalTime = GetLocalTime(resultSet, label)
+    def getLocalTime(label: String): LocalTime =
+      GetLocalTime(resultSet, label)
 
     /** Gets column value as LocalDateTime. */
-    def getLocalDateTime(label: String): LocalDateTime = GetLocalDateTime(resultSet, label)
+    def getLocalDateTime(label: String): LocalDateTime =
+      GetLocalDateTime(resultSet, label)
 
     /**
      * Invokes supplied function for each remaining row of ResultSet.
@@ -844,9 +853,10 @@ object Implicits {
      * @param f map function
      */
     def next[T](f: ResultSet => T): Option[T] =
-      if (resultSet.next())
-        Option(f(resultSet))
-      else None
+      resultSet.next() match {
+        case true  => Option(f(resultSet))
+        case false => None
+      }
 
     /**
      * Maps remaining rows of ResultSet using supplied function.
