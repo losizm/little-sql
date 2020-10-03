@@ -1,6 +1,6 @@
 organization := "com.github.losizm"
 name         := "little-sql"
-version      := "0.11.0"
+version      := "0.12.0"
   
 description  := "The Scala library that provides extension methods to java.sql"
 homepage     := Some(url("https://github.com/losizm/little-sql"))
