@@ -231,7 +231,17 @@ connector.withConnection { implicit conn =>
 }
 ```
 
-Again, the example isn't the best use case, but never mind that.
+You can also supply parameters as a map or a sequence of tuples. In the example
+below, note the parameter placeholders in SQL and how the corresponding
+parameter values are supplied.
+
+```scala
+connector.withConnection { implicit conn =>
+  QueryBuilder("select * from users where id != ${userId} and name != ${userName}")
+    .params("userId" -> 0, "userName" -> "root")
+    .foreach(rs => println(rs.getString("name")))
+}
+```
 
 ### Working with Data Source
 
