@@ -280,6 +280,5 @@ See [scaladoc](https://losizm.github.io/little-sql/latest/api/little/sql/index.h
 for additional details.
 
 ## License
-**little-sql** is licensed under the Apache License, Version 2. See LICENSE file
+**little-sql** is licensed under the Apache License, Version 2. See [LICENSE](LICENSE)
 for more information.
-
