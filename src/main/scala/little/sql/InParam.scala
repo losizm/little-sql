@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Carlos Conyers
+ * Copyright 2021 Carlos Conyers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,10 @@ package little.sql
 import java.sql.{ Date, Time, Timestamp, Types }
 import java.time.{ LocalDate, LocalDateTime, LocalTime }
 
-import TimeConverters._
+import TimeConverters.*
 
 /** Defines value for input parameter. */
-trait InParam {
+trait InParam:
   /** Gets value. */
   def value: Any
 
@@ -30,16 +30,14 @@ trait InParam {
 
   /** Gets SQL type of value as defined in `java.sql.Types.` */
   def sqlType: Int
-}
 
 /** Provides factory methods for InParam. */
-object InParam {
+object InParam:
   /** Represents general-purpose instance of null input parameter. */
-  object Null extends InParam {
+  object Null extends InParam:
     val value   = null
     val isNull  = true
     val sqlType = Types.NULL
-  }
 
   /**
    * Creates InParam with supplied properties.
@@ -87,7 +85,7 @@ object InParam {
 
   /** Creates InParam from BigDecimal. */
   def apply(value: BigDecimal): InParam =
-    apply(if (value != null) value.bigDecimal else null, Types.DECIMAL)
+    apply(if value != null then value.bigDecimal else null, Types.DECIMAL)
 
   /** Creates InParam from Date. */
   def apply(value: Date): InParam = apply(value, Types.DATE)
@@ -106,6 +104,5 @@ object InParam {
 
   /** Creates InParam from LocalDateTime. */
   def apply(value: LocalDateTime): InParam = apply(localDateTimeToTimestamp(value), Types.TIMESTAMP)
-}
 
 private case class InParamImpl(value: Any, isNull: Boolean, sqlType: Int) extends InParam

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Carlos Conyers
+ * Copyright 2021 Carlos Conyers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import java.sql.ResultSet
  *  [[Implicits.PreparedStatementType.execute PreparedStatementType.execute]],
  *  [[QueryBuilder.execute]]
  */
-sealed abstract class Execution {
+sealed abstract class Execution:
   /**
    * Returns `true` if this execution represents result of update;
    * otherwise, returns `false`.
@@ -53,16 +53,14 @@ sealed abstract class Execution {
    * @throws NoSuchElementException if this execution is not result of query
    */
   def resultSet: ResultSet
-}
 
 /** Provides factory methods for Execution. */
-object Execution {
+object Execution:
   /** Creates Update with specified count. */
   def apply(count: Int) = Update(count)
 
   /** Creates Query with supplied result set. */
   def apply(resultSet: ResultSet) = Query(resultSet)
-}
 
 /**
  * Represents result of update.
@@ -74,12 +72,15 @@ object Execution {
  *
  * @param count update count
  */
-final case class Update(count: Int) extends Execution {
+final case class Update(count: Int) extends Execution:
+  /** Returns `true`. */
   val isUpdate = true
+
+  /** Returns `false`. */
   val isQuery = false
 
+  /** Throws `NoSuchElementException`. */
   def resultSet: ResultSet = throw new NoSuchElementException("resultSet")
-}
 
 /**
  * Represents result of query.
@@ -91,9 +92,12 @@ final case class Update(count: Int) extends Execution {
  *
  * @param resultSet result set
  */
-final case class Query(resultSet: ResultSet) extends Execution {
+final case class Query(resultSet: ResultSet) extends Execution:
+  /** Returns `false`. */
   val isUpdate = false
+
+  /** Returns `true`. */
   val isQuery = true
 
+  /** Throws `NoSuchElementException`. */
   def count: Int = throw new NoSuchElementException("count")
-}

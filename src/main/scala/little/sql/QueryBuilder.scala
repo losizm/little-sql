@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Carlos Conyers
+ * Copyright 2021 Carlos Conyers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,9 @@ import scala.util.Try
  * {{{
  * import java.sql.Connection
  *
- * import little.sql.Implicits._
+ * import scala.language.implicitConversions
+ *
+ * import little.sql.Implicits.*
  * import little.sql.QueryBuilder
  *
  * implicit val conn: Connection = ???
@@ -47,7 +49,7 @@ import scala.util.Try
  *   .foreach { rs => printf(s"uid=%d%n", rs.getInt("id")) }
  * }}}
  */
-trait QueryBuilder {
+trait QueryBuilder:
   /** Gets SQL. */
   def sql: String
 
@@ -155,10 +157,9 @@ trait QueryBuilder {
    * @param conn connection to execute query
    */
   def fold[T](init: T)(op: (T, ResultSet) => T)(implicit conn: Connection): T
-}
 
 /** Provides QueryBuilder factory. */
-object QueryBuilder {
+object QueryBuilder:
   /**
    * Creates QueryBuilder initialized with supplied SQL.
    *
@@ -166,21 +167,21 @@ object QueryBuilder {
    */
   def apply(sql: String): QueryBuilder =
     QueryBuilderImpl(sql)
-}
 
 private case class QueryBuilderImpl(
   sql:          String,
   params:       Seq[InParam] = Nil,
   queryTimeout: Int          = 0,
   maxRows:      Int          = 0,
-  fetchSize:    Int          = 0) extends QueryBuilder {
+  fetchSize:    Int          = 0
+) extends QueryBuilder:
 
   require(sql != null)
 
   def params(values: Seq[InParam]): QueryBuilder =
     copy(params = values)
 
-  def params(values: Map[String, InParam]): QueryBuilder = {
+  def params(values: Map[String, InParam]): QueryBuilder =
     val vars = """\$\{\s*(\w+)\s*\}""".r
 
     copy(
@@ -190,7 +191,6 @@ private case class QueryBuilderImpl(
         .map(values(_))
         .toSeq
     )
-  }
 
   def queryTimeout(value: Int): QueryBuilder =
     copy(queryTimeout = value)
@@ -203,13 +203,12 @@ private case class QueryBuilderImpl(
 
   def execute[T](f: Execution => T)(implicit conn: Connection): T =
     withStatement { stmt =>
-      stmt.execute() match {
+      stmt.execute() match
         case true =>
           try f(Query(stmt.getResultSet))
           finally Try(stmt.getResultSet.close())
         case false =>
           f(Update(stmt.getUpdateCount))
-      }
     }
 
 
@@ -225,22 +224,21 @@ private case class QueryBuilderImpl(
 
   def foreach(f: ResultSet => Unit)(implicit conn: Connection): Unit =
     withResultSet { rs =>
-      while (rs.next())
+      while rs.next() do
         f(rs)
     }
 
   def first[T](f: ResultSet => T)(implicit conn: Connection): Option[T] =
     maxRows(1).withResultSet { rs =>
-      rs.next() match {
+      rs.next() match
         case true  => Option(f(rs))
         case false => None
-      }
     }
 
   def map[T](f: ResultSet => T)(implicit conn: Connection): Seq[T] =
     withResultSet { rs =>
       val values = new ListBuffer[T]
-      while (rs.next())
+      while rs.next() do
         values += f(rs)
       values
     }.toSeq
@@ -248,7 +246,7 @@ private case class QueryBuilderImpl(
   def flatMap[T](f: ResultSet => Iterable[T])(implicit conn: Connection): Seq[T] =
     withResultSet { rs =>
       val values = new ListBuffer[T]
-      while (rs.next())
+      while rs.next() do
         f(rs).foreach(values.+=)
       values
     }.toSeq
@@ -256,35 +254,33 @@ private case class QueryBuilderImpl(
   def fold[T](init: T)(op: (T, ResultSet) => T)(implicit conn: Connection): T =
     withResultSet { rs =>
       var value = init
-      while (rs.next())
+      while rs.next() do
         value = op(value, rs)
       value
     }
 
-  private def withStatement[T](f: PreparedStatement => T)(implicit conn: Connection): T = {
+  private def withStatement[T](f: PreparedStatement => T)(implicit conn: Connection): T =
     val stmt = conn.prepareStatement(sql)
 
-    try {
+    try
       params.zipWithIndex.foreach {
         case (null, index) =>
           stmt.setNull(index + 1, Types.NULL)
         case (param, index) =>
-          param.isNull match {
+          param.isNull match
             case true  => stmt.setNull(index + 1, param.sqlType)
             case false => stmt.setObject(index + 1, param.value, param.sqlType)
-          }
       }
 
-      if (queryTimeout > 0)
+      if queryTimeout > 0 then
         Try(stmt.setQueryTimeout(queryTimeout))
 
-      if (maxRows > 0)
+      if maxRows > 0 then
         stmt.setMaxRows(maxRows)
 
-      if (fetchSize > 0)
+      if fetchSize > 0 then
         stmt.setFetchSize(maxRows)
 
       f(stmt)
-    } finally Try(stmt.close())
-  }
-}
+    finally
+      Try(stmt.close())

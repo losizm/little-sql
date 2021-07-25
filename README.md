@@ -2,15 +2,19 @@
 
 The Scala library that provides extension methods to _java.sql_.
 
-[![Maven Central](https://img.shields.io/maven-central/v/com.github.losizm/little-sql_2.13.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22com.github.losizm%22%20AND%20a:%22little-sql_2.13%22)
+[![Maven Central](https://img.shields.io/maven-central/v/com.github.losizm/little-sql_3.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22com.github.losizm%22%20AND%20a:%22little-sql_3%22)
 
 ## Getting Started
 
-To use **little-sql**, add it as a dependency to your project:
+To get started, add **little-sql** as a dependency to your project:
 
 ```scala
-libraryDependencies += "com.github.losizm" %% "little-sql" % "0.12.0"
+libraryDependencies += "com.github.losizm" %% "little-sql" % "1.0.0"
 ```
+
+_**NOTE:** Starting with version 1.0, **little-sql** is written for Scala 3
+exclusively. See previous releases for compatibility with Scala 2.12 and Scala
+2.13._
 
 ## A Taste of little-sql
 
@@ -19,15 +23,15 @@ Here's a taste of what **little-sql** has to offer.
 ### Getting Connection and Executing Statements
 
 The example below demonstrates obtaining a database connection using `Connector`
-and executing a sequence of arbitrary SQL statements. After executing each
-statement, a subclass of `Execution` is passed to the supplied handler. The
-handler will receive either an `Update` providing an update count or a `Query`
-holding a `ResultSet`.
+and executing a series SQL statements. After executing each statement, a
+subclass of `Execution` is passed to the supplied handler. The handler will
+receive either an `Update` providing a count or a `Query` holding a `ResultSet`.
 
 ```scala
 import java.sql.{ PreparedStatement, ResultSet }
 import little.sql.{ Connector, Query, Update }
-import little.sql.Implicits._ // Unleash the power
+import little.sql.Implicits.{ *, given }
+import scala.language.implicitConversions
 
 case class User(id: Int, name: String)
 
@@ -60,7 +64,7 @@ connector.withConnection { conn =>
       case Update(count) => println(s"Rows affected: $count")
 
       // If query was executed, print first row of result set
-      case Query(resultSet) => if (resultSet.next()) println(getUser(resultSet))
+      case Query(resultSet) => if resultSet.next() then println(getUser(resultSet))
     }
   }
 }
@@ -69,8 +73,8 @@ connector.withConnection { conn =>
 ### Setting Parameters in Prepared Statement
 
 If you're executing a statement with input parameters, you can pass the SQL
-along with the parameters and allow the parameters to be set based on their
-value types.
+along with the parameter values allowing them to be set based on their value
+types.
 
 ```scala
 // Get connection, run update with parameters, and print number of rows inserted
@@ -130,16 +134,15 @@ set instead.
 ```scala
 val regUsers: Seq[User] = connector.withConnection { conn =>
   conn.flatMap("select * from users") {
-    getUser(_) match {
+    getUser(_) match
       case User(_, "root") => None
       case user            => Some(user)
-    }
   }
 }
 ```
 
-The above example is not the best of use cases. You could've instead written the
-query to exclude the root user &ndash; but you get the point.
+The above example is not necessarily the best use case. You could've instead
+written the query to exclude the root user &ndash; but you get the point.
 
 ### Getting Custom Values from Result Set
 
@@ -152,7 +155,7 @@ import little.sql.GetValue
 case class Secret(text: String)
 
 // Get Secret from ResultSet
-implicit object GetSecret extends GetValue[Secret] {
+given GetSecret: GetValue[Secret] with
   // Get value by index
   def apply(rs: ResultSet, index: Int): Secret =
     decrypt(rs.getString(index))
@@ -162,9 +165,9 @@ implicit object GetSecret extends GetValue[Secret] {
     decrypt(rs.getString(label))
 
   private def decrypt(text: String): Secret =
-    if (text == null) Secret("")
+    if text == null then
+      Secret("")
     else Secret(text.reverse)
-}
 
 // Get connection, run select, and print each user's password
 connector.withConnection { conn =>
@@ -194,9 +197,11 @@ import scala.language.implicitConversions
 import little.sql.InParam
 
 // Convert Secret to InParam
-implicit def secretToInParam(value: Secret) =
-  if (value == null) InParam.NULL
-  else InParam(value.text.reverse)
+given Conversion[Secret, InParam] with
+  def apply(value: Secret) =
+    if value == null then
+      InParam.Null
+    else InParam(value.text.reverse)
 
 // Get connection, run update with parameters, and print number of rows inserted
 connector.withConnection { conn =>
@@ -210,9 +215,9 @@ connector.withConnection { conn =>
 ### Using QueryBuilder to Build and Execute Statements
 
 `QueryBuilder` is an immutable structure that provides an interface for
-incrementally building SQL statements. And, for executing them, it has versions
-of the comprehension methods demonstrated thus far, such as `foreach`, `map`,
-and `flatMap`, and adds `fold` to top it off.
+incrementally building SQL statements. And, for executing them, it has a
+familiar list of comprehension methods, such as `foreach`, `map`, and `flatMap`,
+and `fold`.
 
 ```scala
 import little.sql.QueryBuilder
@@ -246,16 +251,18 @@ connector.withConnection { implicit conn =>
 ### Working with Data Source
 
 If you have access to an instance of `javax.sql.DataSource`, you can use its
-extension methods for automatic resource management, similar to all `Connector`
+extension methods for automatic resource management, similar to `Connector`
 examples above.
 
 ```scala
 import javax.naming.InitialContext
+import javax.sql.DataSource
 // Adds methods to javax.sql.DataSource
 import little.sql.Implicits.DataSourceType
 
-val ctx = new InitialContext()
-val dataSource = ctx.lookup("java:module/jdbc/UserDB")
+val dataSource = InitialContext()
+  .lookup("java:module/jdbc/UserDB")
+  .asInstanceOf[DataSource]
 
 // Get connection, run update with parameters, and print number of rows inserted
 dataSource.withConnection { conn =>
@@ -276,7 +283,7 @@ dataSource.withConnection("gza", "1iquid5w0rd5") { conn =>
 
 ## API Documentation
 
-See [scaladoc](https://losizm.github.io/little-sql/latest/api/little/sql/index.html)
+See [scaladoc](https://losizm.github.io/little-sql/latest/api/little/sql.html)
 for additional details.
 
 ## License

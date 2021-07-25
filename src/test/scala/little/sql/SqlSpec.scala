@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Carlos Conyers
+ * Copyright 2021 Carlos Conyers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,13 @@
  */
 package little.sql
 
-import org.scalatest.FlatSpec
 import java.sql.{ Connection, ResultSet }
 
-import Implicits._
+import scala.language.implicitConversions
 
-class SqlSpec extends FlatSpec {
+import Implicits.{ *, given }
+
+class SqlSpec extends org.scalatest.flatspec.AnyFlatSpec:
   private val connector = Connector(s"jdbc:h2:${sys.props("java.io.tmpdir")}/test", "sa", "", "org.h2.Driver")
 
   "SQL statement" should "drop table if it exists" in connector.withConnection { conn =>
@@ -117,4 +118,3 @@ class SqlSpec extends FlatSpec {
 
     assert(sum == 21 + 22 + 23)
   }
-}

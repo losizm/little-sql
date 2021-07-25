@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Carlos Conyers
+ * Copyright 2021 Carlos Conyers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,9 +28,9 @@ import scala.util.Try
  * @param password database password
  * @param driverClassName fully qualified class name of JDBC driver
  */
-case class Connector(url: String, user: String, password: String, driverClassName: String) {
+case class Connector(url: String, user: String, password: String, driverClassName: String):
   /** Creates and returns Connection. */
-  def getConnection(): Connection = {
+  def getConnection(): Connection =
     val driver =  Class.forName(driverClassName).newInstance().asInstanceOf[Driver]
 
     val info = new Properties
@@ -38,7 +38,6 @@ case class Connector(url: String, user: String, password: String, driverClassNam
     info.put("password", password)
 
     driver.connect(url, info)
-  }
 
   /**
    * Creates Connection and passes it to supplied function. Connection is closed
@@ -48,13 +47,10 @@ case class Connector(url: String, user: String, password: String, driverClassNam
    *
    * @return value from supplied function
    */
-  def withConnection[T](f: Connection => T): T = {
+  def withConnection[T](f: Connection => T): T =
     val conn = getConnection()
-
     try f(conn)
     finally Try(conn.close())
-  }
 
   /** Returns string representation of connector. */
   override def toString(): String = s"Connector(url=$url,driverClassName=$driverClassName)"
-}

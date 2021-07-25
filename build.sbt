@@ -6,23 +6,15 @@ description  := "The Scala library that provides extension methods to java.sql"
 homepage     := Some(url("https://github.com/losizm/little-sql"))
 licenses     := List("Apache License, Version 2" -> url("http://www.apache.org/licenses/LICENSE-2.0.txt"))
 
-scalaVersion := "2.13.3"
-crossScalaVersions := Seq("2.12.12")
+scalaVersion := "3.0.1"
 
-scalacOptions ++= Seq("-deprecation", "-feature", "-Xcheckinit")
+scalacOptions ++= Seq("-deprecation", "-feature", "-new-syntax", "-Xfatal-warnings", "-Yno-experimental")
 
-Compile / doc / scalacOptions ++= Seq(
-  "-doc-title", name.value,
-  "-doc-version", version.value
-)
-
-unmanagedSourceDirectories in Compile += {
-  (sourceDirectory in Compile).value / s"scala-${scalaBinaryVersion.value}"
-}
+Compile / doc / scalacOptions ++= Seq("-project-version", version.value)
 
 libraryDependencies ++= Seq(
   "com.h2database" %  "h2"        % "1.4.199" % "test",
-  "org.scalatest"  %% "scalatest" % "3.0.8"   % "test"
+  "org.scalatest"  %% "scalatest" % "3.2.9"   % "test"
 )
 
 scmInfo := Some(
