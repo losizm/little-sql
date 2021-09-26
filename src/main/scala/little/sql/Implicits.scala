@@ -286,7 +286,7 @@ object Implicits:
         .queryTimeout(queryTimeout)
         .maxRows(maxRows)
         .fetchSize(fetchSize)
-        .execute(f)(connection)
+        .execute(f)(using connection)
 
     /**
      * Executes query and passes ResultSet to supplied function.
@@ -305,7 +305,7 @@ object Implicits:
         .queryTimeout(queryTimeout)
         .maxRows(maxRows)
         .fetchSize(fetchSize)
-        .withResultSet(f)(connection)
+        .withResultSet(f)(using connection)
 
     /**
      * Executes update and returns update count.
@@ -318,7 +318,7 @@ object Implicits:
       QueryBuilder(sql)
         .params(params)
         .queryTimeout(queryTimeout)
-        .getUpdateCount(connection)
+        .getUpdateCount(using connection)
 
     /**
      * Executes batch of generated statements and returns results.
@@ -370,7 +370,7 @@ object Implicits:
         .queryTimeout(queryTimeout)
         .maxRows(maxRows)
         .fetchSize(fetchSize)
-        .foreach(f)(connection)
+        .foreach(f)(using connection)
 
     /**
      * Executes query and maps first row of ResultSet using supplied function.
@@ -390,7 +390,7 @@ object Implicits:
       QueryBuilder(sql)
         .params(params)
         .queryTimeout(queryTimeout)
-        .first(f)(connection)
+        .first(f)(using connection)
 
     /**
      * Executes query and maps each row of ResultSet using supplied function.
@@ -409,7 +409,7 @@ object Implicits:
         .queryTimeout(queryTimeout)
         .maxRows(maxRows)
         .fetchSize(fetchSize)
-        .map(f)(connection)
+        .map(f)(using connection)
 
     /**
      * Executes query and builds a collection using the elements mapped from
@@ -429,7 +429,7 @@ object Implicits:
         .queryTimeout(queryTimeout)
         .maxRows(maxRows)
         .fetchSize(fetchSize)
-        .flatMap(f)(connection)
+        .flatMap(f)(using connection)
 
     /**
      * Creates Statement and passes it to supplied function. Statement is closed
@@ -720,7 +720,7 @@ object Implicits:
      *
      * @param index column index
      */
-    def get[T](index: Int)(implicit getValue: GetValueByIndex[T]): T =
+    def get[T](index: Int)(using getValue: GetValueByIndex[T]): T =
       getValue(resultSet, index)
 
     /**
@@ -730,7 +730,7 @@ object Implicits:
      *
      * @param label column label
      */
-    def get[T](label: String)(implicit getValue: GetValueByLabel[T]): T =
+    def get[T](label: String)(using getValue: GetValueByLabel[T]): T =
       getValue(resultSet, label)
 
     /**
@@ -741,8 +741,8 @@ object Implicits:
      * @param index column index
      * @param default default value
      */
-    def getOrElse[T](index: Int, default: => T)(implicit getValue: GetValueByIndex[T]): T =
-      getOption(index)(getValue).getOrElse(default)
+    def getOrElse[T](index: Int, default: => T)(using getValue: GetValueByIndex[T]): T =
+      getOption(index).getOrElse(default)
 
     /**
      * Gets column value in current row, or returns default if value is null.
@@ -752,8 +752,8 @@ object Implicits:
      * @param label column label
      * @param default default value
      */
-    def getOrElse[T](label: String, default: => T)(implicit getValue: GetValueByLabel[T]): T =
-      getOption(label)(getValue).getOrElse(default)
+    def getOrElse[T](label: String, default: => T)(using getValue: GetValueByLabel[T]): T =
+      getOption(label).getOrElse(default)
 
     /**
      * Gets column value in current row if value is not null.
@@ -762,7 +762,7 @@ object Implicits:
      *
      * @param index column index
      */
-    def getOption[T](index: Int)(implicit getValue: GetValueByIndex[T]): Option[T] =
+    def getOption[T](index: Int)(using getValue: GetValueByIndex[T]): Option[T] =
       val value = getValue(resultSet, index)
 
       resultSet.wasNull match
@@ -776,7 +776,7 @@ object Implicits:
      *
      * @param label column label
      */
-    def getOption[T](label: String)(implicit getValue: GetValueByLabel[T]): Option[T] =
+    def getOption[T](label: String)(using getValue: GetValueByLabel[T]): Option[T] =
       val value = getValue(resultSet, label)
 
       resultSet.wasNull match

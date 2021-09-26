@@ -32,7 +32,7 @@ import scala.util.Try
  *
  * import scala.language.implicitConversions
  *
- * import little.sql.Implicits.*
+ * import little.sql.Implicits.{ *, given }
  * import little.sql.QueryBuilder
  *
  * implicit val conn: Connection = ???
@@ -94,7 +94,7 @@ trait QueryBuilder:
    * @param handler execution handler
    * @param conn connection to execute statement
    */
-  def execute[T](handler: Execution => T)(implicit conn: Connection): T
+  def execute[T](handler: Execution => T)(using conn: Connection): T
 
   /**
    * Executes query and passes result set to supplied handler.
@@ -102,14 +102,14 @@ trait QueryBuilder:
    * @param handler result set handler
    * @param conn connection to execute query
    */
-  def withResultSet[T](handler: ResultSet => T)(implicit conn: Connection): T
+  def withResultSet[T](handler: ResultSet => T)(using conn: Connection): T
 
   /**
    * Executes update and returns update count.
    *
    * @param conn connection to execute update
    */
-  def getUpdateCount(implicit conn: Connection): Long
+  def getUpdateCount(using conn: Connection): Long
 
   /**
    * Executes query and invokes supplied function for each row of result set.
@@ -117,7 +117,7 @@ trait QueryBuilder:
    * @param f function
    * @param conn connection to execute query
    */
-  def foreach(f: ResultSet => Unit)(implicit conn: Connection): Unit
+  def foreach(f: ResultSet => Unit)(using conn: Connection): Unit
 
   /**
    * Executes query and maps first row of result set using supplied function.
@@ -129,7 +129,7 @@ trait QueryBuilder:
    * @param f function
    * @param conn connection to execute query
    */
-  def first[T](f: ResultSet => T)(implicit conn: Connection): Option[T]
+  def first[T](f: ResultSet => T)(using conn: Connection): Option[T]
 
   /**
    * Executes query and maps each row of result set using supplied function.
@@ -137,7 +137,7 @@ trait QueryBuilder:
    * @param f map function
    * @param conn connection to execute query
    */
-  def map[T](f: ResultSet => T)(implicit conn: Connection): Seq[T]
+  def map[T](f: ResultSet => T)(using conn: Connection): Seq[T]
 
   /**
    * Executes query and builds collection using elements mapped from each row of
@@ -146,7 +146,7 @@ trait QueryBuilder:
    * @param f map function
    * @param conn connection to execute query
    */
-  def flatMap[T](f: ResultSet => Iterable[T])(implicit conn: Connection): Seq[T]
+  def flatMap[T](f: ResultSet => Iterable[T])(using conn: Connection): Seq[T]
 
   /**
    * Executes query and folds result set to single value using given initial
@@ -156,7 +156,7 @@ trait QueryBuilder:
    * @param op binary operator
    * @param conn connection to execute query
    */
-  def fold[T](init: T)(op: (T, ResultSet) => T)(implicit conn: Connection): T
+  def fold[T](init: T)(op: (T, ResultSet) => T)(using conn: Connection): T
 
 /** Provides QueryBuilder factory. */
 object QueryBuilder:
@@ -201,7 +201,7 @@ private case class QueryBuilderImpl(
   def fetchSize(value: Int): QueryBuilder =
     copy(fetchSize = value)
 
-  def execute[T](f: Execution => T)(implicit conn: Connection): T =
+  def execute[T](f: Execution => T)(using conn: Connection): T =
     withStatement { stmt =>
       stmt.execute() match
         case true =>
@@ -212,30 +212,30 @@ private case class QueryBuilderImpl(
     }
 
 
-  def withResultSet[T](f: ResultSet => T)(implicit conn: Connection): T =
+  def withResultSet[T](f: ResultSet => T)(using conn: Connection): T =
     withStatement { stmt =>
       val rs = stmt.executeQuery()
       try f(rs)
       finally Try(rs.close())
     }
 
-  def getUpdateCount(implicit conn: Connection): Long =
+  def getUpdateCount(using conn: Connection): Long =
     withStatement { stmt => stmt.executeUpdate() }
 
-  def foreach(f: ResultSet => Unit)(implicit conn: Connection): Unit =
+  def foreach(f: ResultSet => Unit)(using conn: Connection): Unit =
     withResultSet { rs =>
       while rs.next() do
         f(rs)
     }
 
-  def first[T](f: ResultSet => T)(implicit conn: Connection): Option[T] =
+  def first[T](f: ResultSet => T)(using conn: Connection): Option[T] =
     maxRows(1).withResultSet { rs =>
       rs.next() match
         case true  => Option(f(rs))
         case false => None
     }
 
-  def map[T](f: ResultSet => T)(implicit conn: Connection): Seq[T] =
+  def map[T](f: ResultSet => T)(using conn: Connection): Seq[T] =
     withResultSet { rs =>
       val values = new ListBuffer[T]
       while rs.next() do
@@ -243,7 +243,7 @@ private case class QueryBuilderImpl(
       values
     }.toSeq
 
-  def flatMap[T](f: ResultSet => Iterable[T])(implicit conn: Connection): Seq[T] =
+  def flatMap[T](f: ResultSet => Iterable[T])(using conn: Connection): Seq[T] =
     withResultSet { rs =>
       val values = new ListBuffer[T]
       while rs.next() do
@@ -251,7 +251,7 @@ private case class QueryBuilderImpl(
       values
     }.toSeq
 
-  def fold[T](init: T)(op: (T, ResultSet) => T)(implicit conn: Connection): T =
+  def fold[T](init: T)(op: (T, ResultSet) => T)(using conn: Connection): T =
     withResultSet { rs =>
       var value = init
       while rs.next() do
@@ -259,7 +259,7 @@ private case class QueryBuilderImpl(
       value
     }
 
-  private def withStatement[T](f: PreparedStatement => T)(implicit conn: Connection): T =
+  private def withStatement[T](f: PreparedStatement => T)(using conn: Connection): T =
     val stmt = conn.prepareStatement(sql)
 
     try
