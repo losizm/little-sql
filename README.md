@@ -1,20 +1,19 @@
 # little-sql
 
-The Scala library that provides extension methods to _java.sql_.
-
 [![Maven Central](https://img.shields.io/maven-central/v/com.github.losizm/little-sql_3.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22com.github.losizm%22%20AND%20a:%22little-sql_3%22)
+
+The Scala library that provides extension methods to _java.sql_.
 
 ## Getting Started
 
 To get started, add **little-sql** as a dependency to your project:
 
 ```scala
-libraryDependencies += "com.github.losizm" %% "little-sql" % "1.0.0"
+libraryDependencies += "com.github.losizm" %% "little-sql" % "2.0.0"
 ```
 
-_**NOTE:** Starting with version 1.0, **little-sql** is written for Scala 3
-exclusively. See previous releases for compatibility with Scala 2.12 and Scala
-2.13._
+_**NOTE:** Starting with version 1.0, **little-sql** is written for Scala 3. See
+previous releases for compatibility with Scala 2.12 and Scala 2.13._
 
 ## A Taste of little-sql
 
@@ -165,9 +164,9 @@ given GetSecret: GetValue[Secret] with
     decrypt(rs.getString(label))
 
   private def decrypt(text: String): Secret =
-    if text == null then
-      Secret("")
-    else Secret(text.reverse)
+    text == null match
+      case true  => Secret("")
+      case false => Secret(text.reverse)
 
 // Get connection, run select, and print each user's password
 connector.withConnection { conn =>
@@ -199,9 +198,9 @@ import little.sql.InParam
 // Convert Secret to InParam
 given Conversion[Secret, InParam] with
   def apply(value: Secret) =
-    if value == null then
-      InParam.Null
-    else InParam(value.text.reverse)
+    value == null match
+      case true  => InParam.Null
+      case false => InParam(value.text.reverse)
 
 // Get connection, run update with parameters, and print number of rows inserted
 connector.withConnection { conn =>
@@ -216,8 +215,8 @@ connector.withConnection { conn =>
 
 `QueryBuilder` is an immutable structure that provides an interface for
 incrementally building SQL statements. And, for executing them, it has a
-familiar list of comprehension methods, such as `foreach`, `map`, and `flatMap`,
-and `fold`.
+familiar list of comprehension methods, such as `foreach`, `map`, `flatMap`, and
+`fold`.
 
 ```scala
 import little.sql.QueryBuilder
