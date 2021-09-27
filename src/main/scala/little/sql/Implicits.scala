@@ -16,7 +16,7 @@
 package little.sql
 
 import java.sql.{ Connection, PreparedStatement, ResultSet, Statement, Date, Time, Timestamp, Types }
-import java.time.{ LocalDate, LocalDateTime, LocalTime }
+import java.time.{ Instant, LocalDate, LocalDateTime, LocalTime }
 
 import javax.sql.DataSource
 
@@ -88,6 +88,10 @@ object Implicits:
   given localDateTimeToInParam: Conversion[LocalDateTime, InParam] with
     def apply(value: LocalDateTime) = InParam(value)
 
+  /** Converts Instant to InParam. */
+  given instantToInParam: Conversion[Instant, InParam] with
+    def apply(value: Instant) = InParam(value)
+
   /** Converts Option[T] to InParam. */
   given optionToInParam[T](using convert: Conversion[T, InParam]): Conversion[Option[T], InParam] with
     def apply(value: Option[T]) = value.map(convert).getOrElse(InParam.Null)
@@ -112,6 +116,7 @@ object Implicits:
         case x: LocalDate     => InParam(x)
         case x: LocalTime     => InParam(x)
         case x: LocalDateTime => InParam(x)
+        case x: Instant       => InParam(x)
         case x: Some[_]       => anyToInParam(x.get)
         case None             => InParam.Null
         case x: InParam       => x
@@ -203,6 +208,11 @@ object Implicits:
   given GetLocalDateTime: GetValue[LocalDateTime] with
     def apply(rs: ResultSet, index: Int): LocalDateTime = timestampToLocalDateTime(rs.getTimestamp(index))
     def apply(rs: ResultSet, label: String): LocalDateTime = timestampToLocalDateTime(rs.getTimestamp(label))
+
+  /** Gets Instant from ResultSet. */
+  given GetInstant: GetValue[Instant] with
+    def apply(rs: ResultSet, index: Int): Instant = timestampToInstant(rs.getTimestamp(index))
+    def apply(rs: ResultSet, label: String): Instant = timestampToInstant(rs.getTimestamp(label))
 
   /** Provides extension methods to `javax.sql.DataSource`. */
   implicit class DataSourceType(dataSource: DataSource) extends AnyVal:
@@ -695,6 +705,15 @@ object Implicits:
     def setLocalDateTime(index: Int, value: LocalDateTime): Unit =
       statement.setTimestamp(index, Timestamp.valueOf(value))
 
+    /**
+     * Sets parameter to given `Instant`.
+     *
+     * @param index parameter index
+     * @param value parameter value
+     */
+    def setInstant(index: Int, value: Instant): Unit =
+      statement.setTimestamp(index, Timestamp.from(value))
+
     private def fold[T](params: Seq[InParam])(z: T)(op: (T, ResultSet) => T): T =
       set(params)
 
@@ -795,6 +814,10 @@ object Implicits:
     def getLocalDateTime(index: Int): LocalDateTime =
       GetLocalDateTime(resultSet, index)
 
+    /** Gets column value as Instant. */
+    def getInstant(index: Int): Instant =
+      GetInstant(resultSet, index)
+
     /** Gets column value as LocalDate. */
     def getLocalDate(label: String): LocalDate =
       GetLocalDate(resultSet, label)
@@ -806,6 +829,10 @@ object Implicits:
     /** Gets column value as LocalDateTime. */
     def getLocalDateTime(label: String): LocalDateTime =
       GetLocalDateTime(resultSet, label)
+
+    /** Gets column value as Instant. */
+    def getInstant(label: String): Instant =
+      GetInstant(resultSet, label)
 
     /**
      * Invokes supplied function for each remaining row of ResultSet.

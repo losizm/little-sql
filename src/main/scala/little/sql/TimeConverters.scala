@@ -16,7 +16,7 @@
 package little.sql
 
 import java.sql.{ Date, Time, Timestamp }
-import java.time.{ LocalDate, LocalDateTime, LocalTime }
+import java.time.{ Instant, LocalDate, LocalDateTime, LocalTime }
 
 private object TimeConverters:
   // Date => LocalDate
@@ -42,3 +42,11 @@ private object TimeConverters:
   // LocalDateTime => Timestamp
   def localDateTimeToTimestamp(value: LocalDateTime): Timestamp =
     if value != null then Timestamp.valueOf(value) else null
+
+  // Timestamp => Instant
+  def timestampToInstant(value: Timestamp): Instant =
+    if value != null then value.toInstant else null
+
+  // Instant => Timestamp
+  def instantToTimestamp(value: Instant): Timestamp =
+    if value != null then Timestamp.from(value) else null

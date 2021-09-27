@@ -16,7 +16,7 @@
 package little.sql
 
 import java.sql.{ Date, Time, Timestamp, Types }
-import java.time.{ LocalDate, LocalDateTime, LocalTime }
+import java.time.{ Instant, LocalDate, LocalDateTime, LocalTime }
 
 import TimeConverters.*
 
@@ -104,5 +104,8 @@ object InParam:
 
   /** Creates InParam from LocalDateTime. */
   def apply(value: LocalDateTime): InParam = apply(localDateTimeToTimestamp(value), Types.TIMESTAMP)
+
+  /** Creates InParam from Instant. */
+  def apply(value: Instant): InParam = apply(instantToTimestamp(value), Types.TIMESTAMP)
 
 private case class InParamImpl(value: Any, isNull: Boolean, sqlType: Int) extends InParam

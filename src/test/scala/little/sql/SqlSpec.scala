@@ -22,9 +22,9 @@ import scala.language.implicitConversions
 import Implicits.{ *, given }
 
 class SqlSpec extends org.scalatest.flatspec.AnyFlatSpec:
-  private val connector = Connector(s"jdbc:h2:${sys.props("java.io.tmpdir")}/test", "sa", "", "org.h2.Driver")
+  private val connector = Connector(s"jdbc:h2:${sys.props("java.io.tmpdir")}/SqlSpec", "sa", "", "org.h2.Driver")
 
-  it should "drop table if it exists" in connector.withConnection { conn =>
+  it should "drop table if exists" in connector.withConnection { conn =>
     conn.update("drop table prog_lang if exists")
   }
 
