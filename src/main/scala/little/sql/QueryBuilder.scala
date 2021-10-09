@@ -32,8 +32,7 @@ import scala.util.Try
  *
  * import scala.language.implicitConversions
  *
- * import little.sql.Implicits.{ *, given }
- * import little.sql.QueryBuilder
+ * import little.sql.{ *, given }
  *
  * implicit val conn: Connection = ???
  *

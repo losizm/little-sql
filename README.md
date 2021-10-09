@@ -28,8 +28,7 @@ receive either an `Update` providing a count or a `Query` holding a `ResultSet`.
 
 ```scala
 import java.sql.{ PreparedStatement, ResultSet }
-import little.sql.{ Connector, Query, Update }
-import little.sql.Implicits.{ *, given }
+import little.sql.{ *, given }
 import scala.language.implicitConversions
 
 case class User(id: Int, name: String)
@@ -256,8 +255,7 @@ examples above.
 ```scala
 import javax.naming.InitialContext
 import javax.sql.DataSource
-// Adds methods to javax.sql.DataSource
-import little.sql.Implicits.DataSourceType
+import little.sql.DataSourceExt
 
 val dataSource = InitialContext()
   .lookup("java:module/jdbc/UserDB")

@@ -19,8 +19,6 @@ import java.sql.{ Connection, ResultSet }
 
 import scala.language.implicitConversions
 
-import Implicits.{ *, given }
-
 class SqlSpec extends org.scalatest.flatspec.AnyFlatSpec:
   private val connector = Connector(s"jdbc:h2:${sys.props("java.io.tmpdir")}/SqlSpec", "sa", "", "org.h2.Driver")
 

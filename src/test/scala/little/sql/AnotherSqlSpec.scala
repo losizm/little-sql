@@ -20,8 +20,6 @@ import java.time.{ Instant, LocalDate, LocalDateTime, LocalTime }
 
 import scala.language.implicitConversions
 
-import Implicits.{ *, given }
-
 class AnotherSqlSpec extends org.scalatest.flatspec.AnyFlatSpec:
   private val connector = Connector(s"jdbc:h2:${sys.props("java.io.tmpdir")}/AnotherSqlSpec", "sa", "", "org.h2.Driver")
 

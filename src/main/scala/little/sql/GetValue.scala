@@ -20,7 +20,7 @@ import java.sql.ResultSet
 /**
  * Gets value by index from ResultSet.
  *
- * @see [[GetValueByLabel]], [[Implicits.ResultSetType ResultSetType]]
+ * @see [[GetValueByLabel]], [[ResultSetExt]]
  */
 trait GetValueByIndex[T]:
   /** Gets value by index from ResultSet. */
@@ -29,7 +29,7 @@ trait GetValueByIndex[T]:
 /**
  * Gets value by label from ResultSet.
  *
- * @see [[GetValueByIndex]], [[Implicits.ResultSetType ResultSetType]]
+ * @see [[GetValueByIndex]], [[ResultSetExt]]
  */
 trait GetValueByLabel[T]:
   /** Gets value by label from ResultSet. */
@@ -38,6 +38,6 @@ trait GetValueByLabel[T]:
 /**
  * Gets value from ResultSet.
  *
- * @see [[Implicits.ResultSetType ResultSetType]]
+ * @see [[ResultSetExt]]
  */
 trait GetValue[T] extends GetValueByIndex[T], GetValueByLabel[T]
