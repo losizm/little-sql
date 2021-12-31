@@ -1,21 +1,19 @@
 organization := "com.github.losizm"
 name         := "little-sql"
-version      := "3.0.0"
-
-description  := "The Scala library that provides extension methods to java.sql"
+version      := "4.0.0"
+description  := "The Scala library that provides extension methods for java.sql"
 homepage     := Some(url("https://github.com/losizm/little-sql"))
 licenses     := List("Apache License, Version 2" -> url("http://www.apache.org/licenses/LICENSE-2.0.txt"))
 
+versionScheme := Some("early-semver")
+
 scalaVersion := "3.1.0"
 
-scalacOptions ++= Seq("-deprecation", "-feature", "-new-syntax", "-Xfatal-warnings", "-Yno-experimental")
+scalacOptions := Seq("-deprecation", "-feature", "-new-syntax", "-Xfatal-warnings", "-Yno-experimental")
 
-Compile / doc / scalacOptions ++= Seq(
+Compile / doc / scalacOptions := Seq(
   "-project", name.value,
-  "-project-version", {
-    val ver = version.value
-    ver.substring(0, ver.lastIndexOf(".")) ++ ".x"
-  }
+  "-project-version", version.value
 )
 
 libraryDependencies ++= Seq(
