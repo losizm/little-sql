@@ -255,7 +255,7 @@ examples above.
 ```scala
 import javax.naming.InitialContext
 import javax.sql.DataSource
-import little.sql.DataSourceExt
+import little.sql.DataSourceMethods
 
 val dataSource = InitialContext()
   .lookup("java:module/jdbc/UserDB")

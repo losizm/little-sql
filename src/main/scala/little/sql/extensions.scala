@@ -26,8 +26,8 @@ import scala.util.Try
 
 import TimeConverters.*
 
-/** Provides extension methods to `javax.sql.DataSource`. */
-implicit class DataSourceExt(dataSource: DataSource) extends AnyVal:
+/** Provides extension methods for `javax.sql.DataSource`. */
+implicit class DataSourceMethods(dataSource: DataSource) extends AnyVal:
   /**
    * Creates Connection and passes it to supplied function. Connection is
    * closed on function's return.
@@ -57,7 +57,7 @@ implicit class DataSourceExt(dataSource: DataSource) extends AnyVal:
     finally Try(conn.close())
 
 /**
- * Provides extension methods to `java.sql.Connection`.
+ * Provides extension methods for `java.sql.Connection`.
  *
  * {{{
  * import scala.language.implicitConversions
@@ -89,7 +89,7 @@ implicit class DataSourceExt(dataSource: DataSource) extends AnyVal:
  * }
  * }}}
  */
-implicit class ConnectionExt(connection: Connection) extends AnyVal:
+implicit class ConnectionMethods(connection: Connection) extends AnyVal:
   /**
    * Executes SQL and passes Execution to supplied function.
    *
@@ -280,11 +280,11 @@ implicit class ConnectionExt(connection: Connection) extends AnyVal:
     finally Try(stmt.close())
 
 /**
- * Provides extension methods to `java.sql.Statement`.
+ * Provides extension methods for `java.sql.Statement`.
  *
- * @see [[PreparedStatementExt]]
+ * @see [[PreparedStatementMethods]]
  */
-implicit class StatementExt(statement: Statement) extends AnyVal:
+implicit class StatementMethods(statement: Statement) extends AnyVal:
   /**
    * Executes SQL and passes Execution to supplied function.
    *
@@ -364,11 +364,11 @@ implicit class StatementExt(statement: Statement) extends AnyVal:
     finally Try(rs.close())
 
 /**
- * Provides extension methods to `java.sql.PreparedStatement`.
+ * Provides extension methods for `java.sql.PreparedStatement`.
  *
- * @see [[StatementExt]]
+ * @see [[StatementMethods]]
  */
-implicit class PreparedStatementExt(statement: PreparedStatement) extends AnyVal:
+implicit class PreparedStatementMethods(statement: PreparedStatement) extends AnyVal:
   /**
    * Executes statement with parameters and passes Execution to supplied
    * function.
@@ -532,8 +532,8 @@ implicit class PreparedStatementExt(statement: PreparedStatement) extends AnyVal
     try rs.fold(z)(op)
     finally Try(rs.close())
 
-/** Provides extension methods to `java.sql.ResultSet`. */
-implicit class ResultSetExt(resultSet: ResultSet) extends AnyVal:
+/** Provides extension methods for `java.sql.ResultSet`. */
+implicit class ResultSetMethods(resultSet: ResultSet) extends AnyVal:
   /** Gets column count. */
   def getColumnCount(): Int =
     resultSet.getMetaData.getColumnCount()
