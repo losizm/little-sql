@@ -21,10 +21,11 @@ Here's a taste of what **little-sql** has to offer.
 
 ### Getting Connection and Executing Statements
 
-The example below demonstrates obtaining a database connection using `Connector`
-and executing a series SQL statements. After executing each statement, a
-subclass of `Execution` is passed to the supplied handler. The handler will
-receive either an `Update` providing a count or a `Query` holding a `ResultSet`.
+The example below uses a `Connector`, which is an implementation of
+`javax.sql.DataSource`, to obtain a database connection and execute a series SQL
+statements. After executing each statement, a subclass of `Execution` is passed
+to a supplied handler. The handler receives either an `Update` providing a count
+or a `Query` holding a `ResultSet`.
 
 ```scala
 import java.sql.{ PreparedStatement, ResultSet }
@@ -212,10 +213,9 @@ connector.withConnection { conn =>
 
 ### Using QueryBuilder to Build and Execute Statements
 
-`QueryBuilder` is an immutable structure that provides an interface for
-incrementally building SQL statements. And, for executing them, it has a
-familiar list of comprehension methods, such as `foreach`, `map`, `flatMap`, and
-`fold`.
+`QueryBuilder` provides an interface for incrementally building SQL statements.
+And, for executing them, it has a familiar list of comprehension methods, such
+as `foreach`, `map`, `flatMap`, and `fold`.
 
 ```scala
 import little.sql.QueryBuilder
@@ -248,9 +248,8 @@ connector.withConnection { implicit conn =>
 
 ### Working with Data Source
 
-If you have access to an instance of `javax.sql.DataSource`, you can use its
-extension methods for automatic resource management, similar to `Connector`
-examples above.
+If you have access to an instance of `javax.sql.DataSource`, you can use
+extension methods for automatic resource management.
 
 ```scala
 import javax.naming.InitialContext

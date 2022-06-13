@@ -23,10 +23,6 @@ import scala.util.Try
 /**
  * Provides interface to incrementally build and execute SQL statements.
  *
- * `QueryBuilder` is an immutable structure. A new builder is returned with each
- * requested modification, and a new statement and result set are created on
- * each requested execution.
- *
  * {{{
  * import java.sql.Connection
  *
