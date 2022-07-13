@@ -2,3 +2,8 @@ target/
 .bsp/
 .DS_Store
 *.swp
+.metals/
+.vscode/
+.bloop/
+project/metals.sbt
+project/project/
