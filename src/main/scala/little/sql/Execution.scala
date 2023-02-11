@@ -18,8 +18,9 @@ package little.sql
 import java.sql.ResultSet
 
 /**
- * Represents result of either update or query. If update, result can be
- * obtained via `count`; otherwise, if query, result can be obtained via
+ * Represents result of either update or query.
+ *
+ * If update, the result is `count`; otherwise, the execution is a query with
  * `resultSet`.
  *
  * @see [[ConnectionMethods.execute]],
@@ -28,29 +29,23 @@ import java.sql.ResultSet
  *  [[QueryBuilder.execute]]
  */
 sealed abstract class Execution:
-  /**
-   * Returns `true` if this execution represents result of update;
-   * otherwise, returns `false`.
-   */
+  /** Returns `true` if this execution is an update; otherwise, returns `false`. */
   def isUpdate: Boolean
 
-  /**
-   * Returns `true` if this execution represents result of query;
-   * otherwise, returns `false`.
-   */
+  /** Returns `true` if this execution is a query; otherwise, returns `false`. */
   def isQuery: Boolean
 
   /**
    * Gets update count.
    *
-   * @throws NoSuchElementException if this execution is not result of update
+   * @throws NoSuchElementException if this execution is not an update
    */
   def count: Int
 
   /**
    * Gets result set.
    *
-   * @throws NoSuchElementException if this execution is not result of query
+   * @throws NoSuchElementException if this execution is not a query
    */
   def resultSet: ResultSet
 
@@ -63,12 +58,9 @@ object Execution:
   def apply(resultSet: ResultSet) = Query(resultSet)
 
 /**
- * Represents result of update.
+ * Represents update execution.
  *
- * @see [[Query]], [[ConnectionMethods.execute]],
- *  [[StatementMethods.execute]],
- *  [[PreparedStatementMethods.execute]],
- *  [[QueryBuilder.execute]]
+ * @see [[Query]]
  *
  * @param count update count
  */
@@ -83,12 +75,9 @@ final case class Update(count: Int) extends Execution:
   def resultSet: ResultSet = throw new NoSuchElementException("resultSet")
 
 /**
- * Represents result of query.
+ * Represents query execution.
  *
- * @see [[Update]], [[ConnectionMethods.execute]],
- *  [[StatementMethods.execute]],
- *  [[PreparedStatementMethods.execute]],
- *  [[QueryBuilder.execute]]
+ * @see [[Update]]
  *
  * @param resultSet result set
  */

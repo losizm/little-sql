@@ -60,8 +60,7 @@ implicit class ConnectionMethods(connection: Connection) extends AnyVal:
    * @param params parameters
    * @param queryTimeout maximum number of seconds to wait for execution
    * @param maxRows maximum number of rows to return in result set
-   * @param fetchSize number of result set rows to fetch on each retrieval
-   *   from database
+   * @param fetchSize number of result set rows to fetch on each retrieval from database
    * @param f function
    */
   def execute[T](sql: String, params: Seq[InParam] = Nil, queryTimeout: Int = 0, maxRows: Int = 0, fetchSize: Int = 0)(f: Execution => T): T =
@@ -79,8 +78,7 @@ implicit class ConnectionMethods(connection: Connection) extends AnyVal:
    * @param params parameters
    * @param queryTimeout maximum number of seconds to wait for execution
    * @param maxRows maximum number of rows to return in result set
-   * @param fetchSize number of result set rows to fetch on each retrieval
-   *   from database
+   * @param fetchSize number of result set rows to fetch on each retrieval from database
    * @param f function
    */
   def query[T](sql: String, params: Seq[InParam] = Nil, queryTimeout: Int = 0, maxRows: Int = 0, fetchSize: Int = 0)(f: ResultSet => T): T =
@@ -123,7 +121,7 @@ implicit class ConnectionMethods(connection: Connection) extends AnyVal:
    * Executes batch of statements with generated parameter values and returns
    * results.
    *
-   * The generator must return sets of parameter values that satisfy the
+   * The generator must return sequence of parameter values that satisfy the
    * supplied SQL.
    *
    * @param sql SQL from which prepared statement is created
@@ -145,8 +143,7 @@ implicit class ConnectionMethods(connection: Connection) extends AnyVal:
    * @param params parameters
    * @param queryTimeout maximum number of seconds to wait for execution
    * @param maxRows maximum number of rows to return in result set
-   * @param fetchSize number of result set rows to fetch on each retrieval
-   *   from database
+   * @param fetchSize number of result set rows to fetch on each retrieval from database
    * @param f function
    */
   def foreach(sql: String, params: Seq[InParam] = Nil, queryTimeout: Int = 0, maxRows: Int = 0, fetchSize: Int = 0)(f: ResultSet => Unit): Unit =
@@ -184,8 +181,7 @@ implicit class ConnectionMethods(connection: Connection) extends AnyVal:
    * @param params parameters
    * @param queryTimeout maximum number of seconds to wait for execution
    * @param maxRows maximum number of rows to return in result set
-   * @param fetchSize number of result set rows to fetch on each retrieval
-   *   from database
+   * @param fetchSize number of result set rows to fetch on each retrieval from database
    * @param f map function
    */
   def map[T](sql: String, params: Seq[InParam] = Nil, queryTimeout: Int = 0, maxRows: Int = 0, fetchSize: Int = 0)(f: ResultSet => T): Seq[T] =
@@ -204,8 +200,7 @@ implicit class ConnectionMethods(connection: Connection) extends AnyVal:
    * @param params parameters
    * @param queryTimeout maximum number of seconds to wait for execution
    * @param maxRows maximum number of rows to return in result set
-   * @param fetchSize number of result set rows to fetch on each retrieval
-   *   from database
+   * @param fetchSize number of result set rows to fetch on each retrieval from database
    * @param f map function
    */
   def flatMap[T](sql: String, params: Seq[InParam] = Nil, queryTimeout: Int = 0, maxRows: Int = 0, fetchSize: Int = 0)(f: ResultSet => Iterable[T]): Seq[T] =

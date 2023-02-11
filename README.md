@@ -9,7 +9,7 @@ The Scala library that provides extension methods for _java.sql_.
 To get started, add **little-sql** as a dependency to your project:
 
 ```scala
-libraryDependencies += "com.github.losizm" %% "little-sql" % "5.0.0"
+libraryDependencies += "com.github.losizm" %% "little-sql" % "6.0.0"
 ```
 
 _**NOTE:** Starting with version 1.0, **little-sql** is written for Scala 3. See
@@ -17,15 +17,15 @@ previous releases for compatibility with Scala 2.12 and Scala 2.13._
 
 ## A Taste of little-sql
 
-Here's a taste of what **little-sql** has to offer.
+Here's a taste of what **little-sql** offers.
 
 ### Getting Connection and Executing Statements
 
 The example below uses a `Connector`, which is an implementation of
-`javax.sql.DataSource`, to obtain a database connection and execute a series SQL
-statements. After executing each statement, a subclass of `Execution` is passed
-to a supplied handler. The handler receives either an `Update` providing a count
-or a `Query` holding a `ResultSet`.
+`javax.sql.DataSource`. It obtains a database connection and executes a series
+SQL statements. After executing each statement, a subclass of `Execution` is
+passed to a supplied handler. The execution is either an `Update` providing a
+count or a `Query` holding a `ResultSet`.
 
 ```scala
 import java.sql.{ PreparedStatement, ResultSet }
@@ -39,7 +39,7 @@ def getUser(rs: ResultSet): User = {
 }
 
 // Define database connector
-val connector = Connector("jdbc:h2:~/test", "gza", "1iquid5w0rd5", "org.h2.Driver")
+val connector = Connector("jdbc:h2:~/little-sql", "gza", "1iquid5w0rd5", "org.h2.Driver")
 
 // Create connection, pass it to function, and close connection when done
 connector.withConnection { conn =>
@@ -80,8 +80,9 @@ types.
 connector.withConnection { conn =>
   val sql = "insert into users (id, name) values (?, ?)"
 
-  val count = conn.update(sql, Seq(501, "ghostface"))
-  println(s"Rows inserted: $count")
+  conn.update(sql, Seq(501, "ghostface")) { count =>
+    println(s"Rows inserted: $count")
+  }
 }
 ```
 
@@ -109,7 +110,7 @@ a `ResultSet`, and then you check the result set to see whether it has a row. If
 so, you proceed to get values from the result set. When you're done, you close
 the result set and statement.
 
-With **little-sql**, ditch the ceremony. Get straight to the point.
+With **little-sql**, ditch the ceremony and get straight to the point.
 
 ```scala
 val user: Option[User] = connector.withConnection { conn =>
@@ -206,16 +207,17 @@ given Conversion[Secret, InParam] with
 connector.withConnection { conn =>
   val sql = "insert into passwords (id, password) values (?, ?)"
 
-  val count = conn.update(sql, Seq(501, Secret("ironm@n")))
-  println(s"Rows inserted: $count")
+  conn.update(sql, Seq(501, Secret("ironm@n"))) { count =>
+    println(s"Rows inserted: $count")
+  }
 }
 ```
 
 ### Using QueryBuilder to Build and Execute Statements
 
 `QueryBuilder` provides an interface for incrementally building SQL statements.
-And, for executing them, it has a familiar list of comprehension methods, such
-as `foreach`, `map`, `flatMap`, and `fold`.
+And, for executing them, it has a familiar list of combinators, such as
+`foreach`, `map`, `flatMap`, and `fold`.
 
 ```scala
 import little.sql.QueryBuilder
@@ -265,8 +267,9 @@ dataSource.withConnection { conn =>
   val sql = "insert into users (id, name) values (?, ?)"
   val params = Seq(502, "raekwon")
 
-  val count = conn.update(sql, params)
-  println(s"Rows inserted: $count")
+  conn.update(sql, params) { count =>
+    println(s"Rows inserted: $count")
+  }
 }
 
 // Or if you need to provide user and password
