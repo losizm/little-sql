@@ -89,7 +89,7 @@ implicit class ConnectionMethods(connection: Connection) extends AnyVal:
       .queryTimeout(queryTimeout)
       .maxRows(maxRows)
       .fetchSize(fetchSize)
-      .withResultSet(f)(using connection)
+      .query(f)(using connection)
 
   /**
    * Executes update and returns update count.
@@ -102,7 +102,7 @@ implicit class ConnectionMethods(connection: Connection) extends AnyVal:
     QueryBuilder(sql)
       .params(params)
       .queryTimeout(queryTimeout)
-      .getUpdateCount(using connection)
+      .update()(using connection)
 
   /**
    * Executes batch of generated statements and returns results.

@@ -97,14 +97,14 @@ trait QueryBuilder:
    * @param handler result set handler
    * @param conn connection to execute query
    */
-  def withResultSet[T](handler: ResultSet => T)(using conn: Connection): T
+  def query[T](handler: ResultSet => T)(using conn: Connection): T
 
   /**
    * Executes update and returns update count.
    *
    * @param conn connection to execute update
    */
-  def getUpdateCount(using conn: Connection): Long
+  def update()(using conn: Connection): Long
 
   /**
    * Executes query and invokes supplied function for each row of result set.
@@ -207,31 +207,31 @@ private case class QueryBuilderImpl(
     }
 
 
-  def withResultSet[T](f: ResultSet => T)(using conn: Connection): T =
+  def query[T](f: ResultSet => T)(using conn: Connection): T =
     withStatement { stmt =>
       val rs = stmt.executeQuery()
       try f(rs)
       finally Try(rs.close())
     }
 
-  def getUpdateCount(using conn: Connection): Long =
+  def update()(using conn: Connection): Long =
     withStatement { stmt => stmt.executeUpdate() }
 
   def foreach(f: ResultSet => Unit)(using conn: Connection): Unit =
-    withResultSet { rs =>
+    query { rs =>
       while rs.next() do
         f(rs)
     }
 
   def first[T](f: ResultSet => T)(using conn: Connection): Option[T] =
-    maxRows(1).withResultSet { rs =>
+    maxRows(1).query { rs =>
       rs.next() match
         case true  => Option(f(rs))
         case false => None
     }
 
   def map[T](f: ResultSet => T)(using conn: Connection): Seq[T] =
-    withResultSet { rs =>
+    query { rs =>
       val values = new ListBuffer[T]
       while rs.next() do
         values += f(rs)
@@ -239,7 +239,7 @@ private case class QueryBuilderImpl(
     }.toSeq
 
   def flatMap[T](f: ResultSet => Iterable[T])(using conn: Connection): Seq[T] =
-    withResultSet { rs =>
+    query { rs =>
       val values = new ListBuffer[T]
       while rs.next() do
         f(rs).foreach(values.+=)
@@ -247,7 +247,7 @@ private case class QueryBuilderImpl(
     }.toSeq
 
   def fold[T](init: T)(op: (T, ResultSet) => T)(using conn: Connection): T =
-    withResultSet { rs =>
+    query { rs =>
       var value = init
       while rs.next() do
         value = op(value, rs)
