@@ -23,108 +23,92 @@ import scala.language.{ higherKinds, implicitConversions }
 import TimeConverters.*
 
 /** Converts String to InParam. */
-given stringToInParam: Conversion[String, InParam] with
-  def apply(value: String) = InParam(value)
+given stringToInParam: Conversion[String, InParam] = InParam(_)
 
 /** Converts Boolean to InParam. */
-given booleanToInParam: Conversion[Boolean, InParam] with
-  def apply(value: Boolean) = InParam(value)
+given booleanToInParam: Conversion[Boolean, InParam] = InParam(_)
 
 /** Converts Byte to InParam. */
-given byteToInParam: Conversion[Byte, InParam] with
-  def apply(value: Byte) = InParam(value)
+given byteToInParam: Conversion[Byte, InParam] = InParam(_)
 
 /** Converts Short to InParam. */
-given shortToInParam: Conversion[Short, InParam] with
-  def apply(value: Short) = InParam(value)
+given shortToInParam: Conversion[Short, InParam] = InParam(_)
 
 /** Converts Int to InParam. */
-given intToInParam: Conversion[Int, InParam] with
-  def apply(value: Int) = InParam(value)
+given intToInParam: Conversion[Int, InParam] = InParam(_)
 
 /** Converts Long to InParam. */
-given longToInParam: Conversion[Long, InParam] with
-  def apply(value: Long) = InParam(value)
+given longToInParam: Conversion[Long, InParam] = InParam(_)
 
 /** Converts Float to InParam. */
-given floatToInParam: Conversion[Float, InParam] with
-  def apply(value: Float) = InParam(value)
+given floatToInParam: Conversion[Float, InParam] = InParam(_)
 
 /** Converts Double to InParam. */
-given doubleToInParam: Conversion[Double, InParam] with
-  def apply(value: Double) = InParam(value)
+given doubleToInParam: Conversion[Double, InParam] = InParam(_)
 
 /** Converts BigDecimal to InParam. */
-given bigDecimalToInParam: Conversion[BigDecimal, InParam] with
-  def apply(value: BigDecimal) = InParam(value)
+given bigDecimalToInParam: Conversion[BigDecimal, InParam] = InParam(_)
 
 /** Converts Date to InParam. */
-given dateToInParam: Conversion[Date, InParam] with
-  def apply(value: Date) = InParam(value)
+given dateToInParam: Conversion[Date, InParam] = InParam(_)
 
 /** Converts Time to InParam. */
-given timeToInParam: Conversion[Time, InParam] with
-  def apply(value: Time) = InParam(value)
+given timeToInParam: Conversion[Time, InParam] = InParam(_)
 
 /** Converts Timestamp to InParam. */
-given timestampToInParam: Conversion[Timestamp, InParam] with
-  def apply(value: Timestamp) = InParam(value)
+given timestampToInParam: Conversion[Timestamp, InParam] = InParam(_)
 
 /** Converts LocalDate to InParam. */
-given localDateToInParam: Conversion[LocalDate, InParam] with
-  def apply(value: LocalDate) = InParam(value)
+given localDateToInParam: Conversion[LocalDate, InParam] = InParam(_)
 
 /** Converts LocalTime to InParam. */
-given localTimeToInParam: Conversion[LocalTime, InParam] with
-  def apply(value: LocalTime) = InParam(value)
+given localTimeToInParam: Conversion[LocalTime, InParam] = InParam(_)
 
 /** Converts LocalDateTime to InParam. */
-given localDateTimeToInParam: Conversion[LocalDateTime, InParam] with
-  def apply(value: LocalDateTime) = InParam(value)
+given localDateTimeToInParam: Conversion[LocalDateTime, InParam] = InParam(_)
 
 /** Converts Instant to InParam. */
-given instantToInParam: Conversion[Instant, InParam] with
-  def apply(value: Instant) = InParam(value)
+given instantToInParam: Conversion[Instant, InParam] = InParam(_)
+
+/** Converts None to InParam. */
+given noneToInParam: Conversion[None.type, InParam] = _ => InParam.Null
 
 /** Converts Option[T] to InParam. */
 given optionToInParam[T](using convert: Conversion[T, InParam]): Conversion[Option[T], InParam] with
   def apply(value: Option[T]) = value.map(convert).getOrElse(InParam.Null)
 
 /** Converts Any to InParam. */
-given anyToInParam: Conversion[Any, InParam] with
-  def apply(value: Any): InParam =
-    value match
-      case null             => InParam.Null
-      case x: String        => InParam(x)
-      case x: Boolean       => InParam(x)
-      case x: Byte          => InParam(x)
-      case x: Short         => InParam(x)
-      case x: Int           => InParam(x)
-      case x: Long          => InParam(x)
-      case x: Float         => InParam(x)
-      case x: Double        => InParam(x)
-      case x: BigDecimal    => InParam(x)
-      case x: Date          => InParam(x)
-      case x: Time          => InParam(x)
-      case x: Timestamp     => InParam(x)
-      case x: LocalDate     => InParam(x)
-      case x: LocalTime     => InParam(x)
-      case x: LocalDateTime => InParam(x)
-      case x: Instant       => InParam(x)
-      case x: Some[_]       => anyToInParam(x.get)
-      case None             => InParam.Null
-      case x: InParam       => x
-      case x: Any           => throw IllegalArgumentException(s"Cannot convert instance of ${x.getClass.getName} to little.sql.InParam")
+given anyToInParam: Conversion[Any, InParam] =
+  case null             => InParam.Null
+  case x: InParam       => x
+  case x: String        => InParam(x)
+  case x: Boolean       => InParam(x)
+  case x: Byte          => InParam(x)
+  case x: Short         => InParam(x)
+  case x: Int           => InParam(x)
+  case x: Long          => InParam(x)
+  case x: Float         => InParam(x)
+  case x: Double        => InParam(x)
+  case x: BigDecimal    => InParam(x)
+  case x: Date          => InParam(x)
+  case x: Time          => InParam(x)
+  case x: Timestamp     => InParam(x)
+  case x: LocalDate     => InParam(x)
+  case x: LocalTime     => InParam(x)
+  case x: LocalDateTime => InParam(x)
+  case x: Instant       => InParam(x)
+  case x: Option[?]     => x.map(anyToInParam).getOrElse(InParam.Null)
+  case x: Any           => throw IllegalArgumentException(s"Cannot convert instance of ${x.getClass.getName} to little.sql.InParam")
 
 /** Converts Seq[T] to Seq[InParam]. */
 given seqToSeqInParam[T](using convert: Conversion[T, InParam]): Conversion[Seq[T], Seq[InParam]] with
   def apply(values: Seq[T]) = values.map(convert)
 
-/** Converts Map[T] to Seq[InParam]. */
+/** Converts Map[String, T] to Seq[String, InParam]. */
 given mapToMapInParam[T](using convert: Conversion[T, InParam]): Conversion[Map[String, T], Map[String, InParam]] with
   def apply(values: Map[String, T]) = values.map { (name, value) => name -> convert(value) }
 
-/** Converts Map[T] to Seq[InParam]. */
+/** Converts (String, T) to (String, InParam). */
 given tupleToTupleInParam[T](using convert: Conversion[T, InParam]): Conversion[(String, T), (String, InParam)] with
   def apply(value: (String, T)) = value._1 -> convert(value._2)
 
