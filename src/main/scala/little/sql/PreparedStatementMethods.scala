@@ -28,8 +28,7 @@ import scala.util.Try
  */
 implicit class PreparedStatementMethods(statement: PreparedStatement) extends AnyVal:
   /**
-   * Executes statement with parameters and passes Execution to supplied
-   * function.
+   * Sets parameters, executes statement, and passes result to supplied function.
    *
    * @param params parameters
    * @param f function
@@ -46,7 +45,7 @@ implicit class PreparedStatementMethods(statement: PreparedStatement) extends An
         f(Update(statement.getUpdateCount))
 
   /**
-   * Executes query with parameters and passes ResultSet to supplied function.
+   * Sets parameters, executes query, and passes result set to supplied function.
    *
    * @param params parameters
    * @param f function
@@ -59,13 +58,14 @@ implicit class PreparedStatementMethods(statement: PreparedStatement) extends An
     finally Try(rs.close())
 
   /**
-   * Executes update with parameters and returns update count.
+   * Sets parameters, executes update, and passes update count to supplied function.
    *
    * @param params parameters
+   * @param f function
    */
-  def update(params: Seq[InParam]): Int =
+  def update[T](params: Seq[InParam])(f: Long => T): T =
     set(params)
-    statement.executeUpdate()
+    f(statement.executeUpdate())
 
   /**
    * Sets parameter at index to given value.
@@ -101,7 +101,7 @@ implicit class PreparedStatementMethods(statement: PreparedStatement) extends An
 
   /**
    * Executes query with parameters and invokes supplied function for each row
-   * of ResultSet.
+   * of result set.
    *
    * @param params parameters
    * @param f function
@@ -110,7 +110,7 @@ implicit class PreparedStatementMethods(statement: PreparedStatement) extends An
     query(params) { _.foreach(f) }
 
   /**
-   * Executes query with parameters and maps first row of ResultSet using
+   * Executes query with parameters and maps first row of result set using
    * supplied function.
    *
    * If the result set is not empty, and if the supplied function's return
@@ -125,7 +125,7 @@ implicit class PreparedStatementMethods(statement: PreparedStatement) extends An
     query(params) { _.next(f) }
 
   /**
-   * Executes query with parameters and maps each row of ResultSet using
+   * Executes query with parameters and maps each row of result set using
    * supplied function.
    *
    * @param params parameters
@@ -136,7 +136,7 @@ implicit class PreparedStatementMethods(statement: PreparedStatement) extends An
 
   /**
    * Executes query and builds a collection using the elements mapped from
-   * each row of ResultSet.
+   * each row of result set.
    *
    * @param params parameters
    * @param f map function

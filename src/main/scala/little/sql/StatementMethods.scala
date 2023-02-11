@@ -27,7 +27,7 @@ import scala.util.Try
  */
 implicit class StatementMethods(statement: Statement) extends AnyVal:
   /**
-   * Executes SQL and passes Execution to supplied function.
+   * Executes SQL and passes result to supplied function.
    *
    * @param sql SQL statement
    * @param f function
@@ -42,7 +42,7 @@ implicit class StatementMethods(statement: Statement) extends AnyVal:
         f(Update(statement.getUpdateCount))
 
   /**
-   * Executes query and passes ResultSet to supplied function.
+   * Executes query and passes result set to supplied function.
    *
    * @param sql SQL query
    * @param f function
@@ -53,7 +53,16 @@ implicit class StatementMethods(statement: Statement) extends AnyVal:
     finally Try(rs.close())
 
   /**
-   * Executes query and invokes supplied function for each row of ResultSet.
+   * Executes update and passes update count to supplied function.
+   *
+   * @param sql SQL query
+   * @param f function
+   */
+  def update[T](sql: String)(f: Long => T): T =
+    f(statement.executeUpdate(sql))
+
+  /**
+   * Executes query and invokes supplied function for each row of result set.
    *
    * @param sql SQL query
    * @param f function
@@ -62,7 +71,7 @@ implicit class StatementMethods(statement: Statement) extends AnyVal:
     query(sql) { _.foreach(f) }
 
   /**
-   * Executes query and maps first row of ResultSet using supplied function.
+   * Executes query and maps first row of result set using supplied function.
    *
    * If the result set is not empty, and if the supplied function's return
    * value is not null, then `Some` value is returned; otherwise, `None` is
@@ -76,7 +85,7 @@ implicit class StatementMethods(statement: Statement) extends AnyVal:
     query(sql) { _.next(f) }
 
   /**
-   * Executes query and maps each row of ResultSet using supplied function.
+   * Executes query and maps each row of result set using supplied function.
    *
    * @param sql SQL query
    * @param params parameters
@@ -87,7 +96,7 @@ implicit class StatementMethods(statement: Statement) extends AnyVal:
 
   /**
    * Executes query and builds a collection using the elements mapped from
-   * each row of ResultSet.
+   * each row of result set.
    *
    * @param sql SQL query
    * @param params parameters

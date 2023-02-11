@@ -43,7 +43,7 @@ import scala.util.Try
  *       // If update is executed print update count
  *       case Update(count) ⇒ println(s"Update Count: \$count")
  *
- *       // If query is executed print values of each row in ResultSet
+ *       // If query is executed print values of each row in result set
  *       case Query(resultSet) =>
  *         while (resultSet.next())
  *           printf("id: %d, name: %s%n", resultSet.getInt("id"), resultSet.getString("name"))
@@ -54,7 +54,7 @@ import scala.util.Try
  */
 implicit class ConnectionMethods(connection: Connection) extends AnyVal:
   /**
-   * Executes SQL and passes Execution to supplied function.
+   * Executes SQL and passes result to supplied function.
    *
    * @param sql SQL
    * @param params parameters
@@ -73,7 +73,7 @@ implicit class ConnectionMethods(connection: Connection) extends AnyVal:
       .execute(f)(using connection)
 
   /**
-   * Executes query and passes ResultSet to supplied function.
+   * Executes query and passes result set to supplied function.
    *
    * @param sql SQL query
    * @param params parameters
@@ -92,17 +92,18 @@ implicit class ConnectionMethods(connection: Connection) extends AnyVal:
       .query(f)(using connection)
 
   /**
-   * Executes update and returns update count.
+   * Executes update and passes update count to supplied function.
    *
    * @param sql SQL update
    * @param params parameters
    * @param queryTimeout maximum number of seconds to wait for execution
+   * @param f function
    */
-  def update(sql: String, params: Seq[InParam] = Nil, queryTimeout: Int = 0): Long =
+  def update[T](sql: String, params: Seq[InParam] = Nil, queryTimeout: Int = 0)(f: Long => T): T =
     QueryBuilder(sql)
       .params(params)
       .queryTimeout(queryTimeout)
-      .update()(using connection)
+      .update(f)(using connection)
 
   /**
    * Executes batch of generated statements and returns results.
@@ -138,7 +139,7 @@ implicit class ConnectionMethods(connection: Connection) extends AnyVal:
       Try(stmt.close())
 
   /**
-   * Executes query and invokes supplied function for each row of ResultSet.
+   * Executes query and invokes supplied function for each row of result set.
    *
    * @param sql SQL query
    * @param params parameters
@@ -157,7 +158,7 @@ implicit class ConnectionMethods(connection: Connection) extends AnyVal:
       .foreach(f)(using connection)
 
   /**
-   * Executes query and maps first row of ResultSet using supplied function.
+   * Executes query and maps first row of result set using supplied function.
    *
    * If the result set is not empty, and if the supplied function's return
    * value is not null, then `Some` value is returned; otherwise, `None` is
@@ -177,7 +178,7 @@ implicit class ConnectionMethods(connection: Connection) extends AnyVal:
       .first(f)(using connection)
 
   /**
-   * Executes query and maps each row of ResultSet using supplied function.
+   * Executes query and maps each row of result set using supplied function.
    *
    * @param sql SQL query
    * @param params parameters
@@ -197,7 +198,7 @@ implicit class ConnectionMethods(connection: Connection) extends AnyVal:
 
   /**
    * Executes query and builds a collection using the elements mapped from
-   * each row of ResultSet.
+   * each row of result set.
    *
    * @param sql SQL query
    * @param params parameters

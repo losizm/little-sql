@@ -23,16 +23,21 @@ class SqlSpec extends org.scalatest.flatspec.AnyFlatSpec:
   private val connector = Connector(s"jdbc:h2:${sys.props("java.io.tmpdir")}/SqlSpec", "sa", "", "org.h2.Driver")
 
   it should "drop table if exists" in connector.withConnection { conn =>
-    conn.update("drop table prog_lang if exists")
+    conn.update("drop table prog_lang if exists") { count =>
+      assert(count == 0)
+    }
   }
 
   it should "create table" in connector.withConnection { conn =>
-    conn.update("create table prog_lang (id int, name text, comments text)")
+    conn.update("create table prog_lang (id int, name text, comments text)") { count =>
+      assert(count == 0)
+    }
   }
 
   it should "insert records into table" in connector.withConnection { conn =>
-    val count = conn.update("insert into prog_lang(id, name) values (1, 'basic'), (2, 'pascal'), (3, 'c')")
-    assert(count == 3)
+    conn.update("insert into prog_lang(id, name) values (1, 'basic'), (2, 'pascal'), (3, 'c')") { count =>
+      assert(count == 3)
+    }
   }
 
   it should "select records from table" in connector.withConnection { conn =>
@@ -56,7 +61,10 @@ class SqlSpec extends org.scalatest.flatspec.AnyFlatSpec:
   }
 
   it should "insert records into table with null value" in connector.withConnection { conn =>
-    conn.update("insert into prog_lang (id, name) values (?, ?)", Seq(None, "cobol"))
+    conn.update("insert into prog_lang (id, name) values (?, ?)", Seq(None, "cobol")) { count =>
+      assert(count == 1)
+    }
+
     val count: Option[Int] = conn.first("select count(*) from prog_lang where id is null") { rs =>
       rs.get[Int](1)
     }

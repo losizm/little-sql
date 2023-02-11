@@ -92,19 +92,20 @@ trait QueryBuilder:
   def execute[T](handler: Execution => T)(using conn: Connection): T
 
   /**
-   * Executes query and passes result set to supplied handler.
+   * Executes query and passes result set to supplied function.
    *
-   * @param handler result set handler
+   * @param f function
    * @param conn connection to execute query
    */
-  def query[T](handler: ResultSet => T)(using conn: Connection): T
+  def query[T](f: ResultSet => T)(using conn: Connection): T
 
   /**
-   * Executes update and returns update count.
+   * Executes update and passes update count to supplied function.
    *
+   * @param f function
    * @param conn connection to execute update
    */
-  def update()(using conn: Connection): Long
+  def update[T](f: Long => T)(using conn: Connection): T
 
   /**
    * Executes query and invokes supplied function for each row of result set.
@@ -214,8 +215,8 @@ private case class QueryBuilderImpl(
       finally Try(rs.close())
     }
 
-  def update()(using conn: Connection): Long =
-    withStatement { stmt => stmt.executeUpdate() }
+  def update[T](f: Long => T)(using conn: Connection): T =
+    withStatement { stmt => f(stmt.executeUpdate()) }
 
   def foreach(f: ResultSet => Unit)(using conn: Connection): Unit =
     query { rs =>
