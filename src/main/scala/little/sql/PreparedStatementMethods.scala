@@ -42,7 +42,7 @@ implicit class PreparedStatementMethods(statement: PreparedStatement) extends An
         try f(Query(rs))
         finally Try(rs.close())
       case false =>
-        f(Update(statement.getUpdateCount))
+        f(Update(statement.getLargeUpdateCount))
 
   /**
    * Sets parameters, executes query, and passes result set to supplied function.

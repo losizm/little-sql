@@ -204,7 +204,7 @@ private case class QueryBuilderImpl(
           try f(Query(stmt.getResultSet))
           finally Try(stmt.getResultSet.close())
         case false =>
-          f(Update(stmt.getUpdateCount))
+          f(Update(stmt.getLargeUpdateCount))
     }
 
 
@@ -275,7 +275,7 @@ private case class QueryBuilderImpl(
         stmt.setMaxRows(maxRows)
 
       if fetchSize > 0 then
-        stmt.setFetchSize(maxRows)
+        stmt.setFetchSize(fetchSize)
 
       f(stmt)
     finally

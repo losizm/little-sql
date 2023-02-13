@@ -39,7 +39,7 @@ implicit class StatementMethods(statement: Statement) extends AnyVal:
         try f(Query(rs))
         finally Try(rs.close())
       case false =>
-        f(Update(statement.getUpdateCount))
+        f(Update(statement.getLargeUpdateCount))
 
   /**
    * Executes query and passes result set to supplied function.

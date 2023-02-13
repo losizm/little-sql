@@ -40,7 +40,7 @@ sealed abstract class Execution:
    *
    * @throws NoSuchElementException if this execution is not an update
    */
-  def count: Int
+  def count: Long
 
   /**
    * Gets result set.
@@ -52,7 +52,7 @@ sealed abstract class Execution:
 /** Provides factory methods for Execution. */
 object Execution:
   /** Creates Update with specified count. */
-  def apply(count: Int) = Update(count)
+  def apply(count: Long) = Update(count)
 
   /** Creates Query with supplied result set. */
   def apply(resultSet: ResultSet) = Query(resultSet)
@@ -64,7 +64,7 @@ object Execution:
  *
  * @param count update count
  */
-final case class Update(count: Int) extends Execution:
+final case class Update(count: Long) extends Execution:
   /** Returns `true`. */
   val isUpdate = true
 
@@ -89,4 +89,4 @@ final case class Query(resultSet: ResultSet) extends Execution:
   val isQuery = true
 
   /** Throws `NoSuchElementException`. */
-  def count: Int = throw new NoSuchElementException("count")
+  def count: Long = throw new NoSuchElementException("count")
