@@ -122,6 +122,7 @@ class Connector(url: String, user: String, password: String, driverClassName: St
   private def createDriver(): Driver =
     classLoader()
       .loadClass(driverClassName)
+      .getConstructor()
       .newInstance()
       .asInstanceOf
 
