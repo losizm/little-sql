@@ -122,7 +122,7 @@ implicit class PreparedStatementMethods(statement: PreparedStatement) extends An
    */
   def first[T](params: Seq[InParam])(f: ResultSet => T): Option[T] =
     Try(statement.setMaxRows(1))
-    query(params) { _.mapNext(f) }
+    query(params) { _.next(f) }
 
   /**
    * Executes query with parameters and maps each row of result set using

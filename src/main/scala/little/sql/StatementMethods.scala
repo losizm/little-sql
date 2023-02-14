@@ -82,7 +82,7 @@ implicit class StatementMethods(statement: Statement) extends AnyVal:
    */
   def first[T](sql: String)(f: ResultSet => T): Option[T] =
     Try(statement.setMaxRows(1))
-    query(sql) { _.mapNext(f) }
+    query(sql) { _.next(f) }
 
   /**
    * Executes query and maps each row of result set using supplied function.

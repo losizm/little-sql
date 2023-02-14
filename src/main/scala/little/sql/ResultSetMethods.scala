@@ -151,7 +151,7 @@ implicit class ResultSetMethods(resultSet: ResultSet) extends AnyVal:
    *
    * @param f map function
    */
-  def mapNext[T](f: ResultSet => T): Option[T] =
+  def next[T](f: ResultSet => T): Option[T] =
     resultSet.next() match
       case true  => Option(f(resultSet))
       case false => None
