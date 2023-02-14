@@ -104,6 +104,16 @@ implicit class ConnectionMethods(connection: Connection) extends AnyVal:
       .update(f)(using connection)
 
   /**
+   * Executes update and returns update count.
+   *
+   * @param sql SQL update
+   * @param params parameters
+   * @param queryTimeout maximum number of seconds to wait for execution
+   */
+  def executeUpdate(sql: String, params: Seq[InParam] = Nil, queryTimeout: Int = 0): Long =
+    update(sql, params, queryTimeout)(identity)
+
+  /**
    * Executes batch of generated statements and returns results.
    *
    * @param generator SQL generator

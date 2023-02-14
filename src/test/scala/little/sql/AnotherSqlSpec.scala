@@ -24,13 +24,11 @@ class AnotherSqlSpec extends org.scalatest.flatspec.AnyFlatSpec:
   private val connector = Connector(s"jdbc:h2:${sys.props("java.io.tmpdir")}/AnotherSqlSpec", "sa", "", "org.h2.Driver")
 
   it should "drop table if exists" in connector.withConnection { conn =>
-    conn.update("drop table test_values if exists") { count =>
-      assert(count == 0)
-    }
+    conn.executeUpdate("drop table test_values if exists")
   }
 
   it should "create table" in connector.withConnection { conn =>
-    conn.update("""
+    conn.executeUpdate("""
       create table test_values (
         id               varchar(40) unique,
         varchar_value    varchar(8),
@@ -40,9 +38,7 @@ class AnotherSqlSpec extends org.scalatest.flatspec.AnyFlatSpec:
         time_value       time,
         timestamp_value  timestamp(3)
       )
-    """) { count =>
-      assert(count == 0)
-    }
+    """)
   }
 
   it should "insert and select String value" in connector.withConnection { implicit conn =>

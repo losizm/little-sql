@@ -108,12 +108,24 @@ trait QueryBuilder:
   def update[T](f: Long => T)(using conn: Connection): T
 
   /**
+   * Executes update and returns update count.
+   *
+   * @param conn connection to execute update
+   */
+  def executeUpdate()(using conn: Connection): Long =
+    update(identity)
+
+  /**
    * Executes query and invokes supplied function for each row of result set.
    *
    * @param f function
    * @param conn connection to execute query
    */
-  def foreach(f: ResultSet => Unit)(using conn: Connection): Unit
+  def foreach(f: ResultSet => Unit)(using conn: Connection): Unit =
+    query { rs =>
+      while rs.next() do
+        f(rs)
+    }
 
   /**
    * Executes query and maps first row of result set using supplied function.
@@ -125,7 +137,12 @@ trait QueryBuilder:
    * @param f function
    * @param conn connection to execute query
    */
-  def first[T](f: ResultSet => T)(using conn: Connection): Option[T]
+  def first[T](f: ResultSet => T)(using conn: Connection): Option[T] =
+    maxRows(1).query { rs =>
+      rs.next() match
+        case true  => Option(f(rs))
+        case false => None
+    }
 
   /**
    * Executes query and maps each row of result set using supplied function.
@@ -133,7 +150,13 @@ trait QueryBuilder:
    * @param f map function
    * @param conn connection to execute query
    */
-  def map[T](f: ResultSet => T)(using conn: Connection): Seq[T]
+  def map[T](f: ResultSet => T)(using conn: Connection): Seq[T] =
+    query { rs =>
+      val values = new ListBuffer[T]
+      while rs.next() do
+        values += f(rs)
+      values
+    }.toSeq
 
   /**
    * Executes query and builds collection using elements mapped from each row of
@@ -142,7 +165,13 @@ trait QueryBuilder:
    * @param f map function
    * @param conn connection to execute query
    */
-  def flatMap[T](f: ResultSet => Iterable[T])(using conn: Connection): Seq[T]
+  def flatMap[T](f: ResultSet => Iterable[T])(using conn: Connection): Seq[T] =
+    query { rs =>
+      val values = new ListBuffer[T]
+      while rs.next() do
+        f(rs).foreach(values.+=)
+      values
+    }.toSeq
 
   /**
    * Executes query and folds result set to single value using given initial
@@ -152,7 +181,13 @@ trait QueryBuilder:
    * @param op binary operator
    * @param conn connection to execute query
    */
-  def fold[T](init: T)(op: (T, ResultSet) => T)(using conn: Connection): T
+  def fold[T](init: T)(op: (T, ResultSet) => T)(using conn: Connection): T =
+    query { rs =>
+      var value = init
+      while rs.next() do
+        value = op(value, rs)
+      value
+    }
 
 /** Provides QueryBuilder factory. */
 object QueryBuilder:
@@ -217,43 +252,6 @@ private case class QueryBuilderImpl(
 
   def update[T](f: Long => T)(using conn: Connection): T =
     withStatement { stmt => f(stmt.executeUpdate()) }
-
-  def foreach(f: ResultSet => Unit)(using conn: Connection): Unit =
-    query { rs =>
-      while rs.next() do
-        f(rs)
-    }
-
-  def first[T](f: ResultSet => T)(using conn: Connection): Option[T] =
-    maxRows(1).query { rs =>
-      rs.next() match
-        case true  => Option(f(rs))
-        case false => None
-    }
-
-  def map[T](f: ResultSet => T)(using conn: Connection): Seq[T] =
-    query { rs =>
-      val values = new ListBuffer[T]
-      while rs.next() do
-        values += f(rs)
-      values
-    }.toSeq
-
-  def flatMap[T](f: ResultSet => Iterable[T])(using conn: Connection): Seq[T] =
-    query { rs =>
-      val values = new ListBuffer[T]
-      while rs.next() do
-        f(rs).foreach(values.+=)
-      values
-    }.toSeq
-
-  def fold[T](init: T)(op: (T, ResultSet) => T)(using conn: Connection): T =
-    query { rs =>
-      var value = init
-      while rs.next() do
-        value = op(value, rs)
-      value
-    }
 
   private def withStatement[T](f: PreparedStatement => T)(using conn: Connection): T =
     val stmt = conn.prepareStatement(sql)
