@@ -9,7 +9,7 @@ The Scala library that provides extension methods for _java.sql_.
 To get started, add **little-sql** as a dependency to your project:
 
 ```scala
-libraryDependencies += "com.github.losizm" %% "little-sql" % "7.0.0"
+libraryDependencies += "com.github.losizm" %% "little-sql" % "8.0.0"
 ```
 
 _**NOTE:** Starting with version 1.0, **little-sql** is written for Scala 3. See
