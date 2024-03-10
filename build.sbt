@@ -7,7 +7,7 @@ licenses     := List("Apache License, Version 2" -> url("http://www.apache.org/l
 
 versionScheme := Some("early-semver")
 
-scalaVersion := "3.1.2"
+scalaVersion := "3.3.1"
 
 scalacOptions := Seq("-deprecation", "-feature", "-new-syntax", "-Werror", "-Yno-experimental")
 
@@ -17,8 +17,8 @@ Compile / doc / scalacOptions := Seq(
 )
 
 libraryDependencies ++= Seq(
-  "com.h2database" %  "h2"        % "1.4.199" % "test",
-  "org.scalatest"  %% "scalatest" % "3.2.12"  % "test"
+  "com.h2database" %  "h2"        % "2.2.224" % Test,
+  "org.scalatest"  %% "scalatest" % "3.2.18"  % Test
 )
 
 scmInfo := Some(
