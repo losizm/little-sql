@@ -20,7 +20,7 @@ import java.sql.{ Connection, ResultSet }
 import scala.language.implicitConversions
 
 class SqlSpec extends org.scalatest.flatspec.AnyFlatSpec:
-  private val connector = Connector(s"jdbc:h2:${sys.props("java.io.tmpdir")}/SqlSpec", "sa", "", "org.h2.Driver")
+  private val connector = Connector("jdbc:h2:./target/db/SqlSpec", "sa", "", "org.h2.Driver")
 
   it should "drop table if exists" in connector.withConnection { conn =>
     assert(conn.executeUpdate("drop table prog_lang if exists") == 0)

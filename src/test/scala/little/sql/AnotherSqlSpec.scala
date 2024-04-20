@@ -21,7 +21,7 @@ import java.time.{ Instant, LocalDate, LocalDateTime, LocalTime }
 import scala.language.implicitConversions
 
 class AnotherSqlSpec extends org.scalatest.flatspec.AnyFlatSpec:
-  private val connector = Connector(s"jdbc:h2:${sys.props("java.io.tmpdir")}/AnotherSqlSpec", "sa", "", "org.h2.Driver")
+  private val connector = Connector("jdbc:h2:./target/db/AnotherSqlSpec", "sa", "", "org.h2.Driver")
 
   it should "drop table if exists" in connector.withConnection { conn =>
     conn.executeUpdate("drop table test_values if exists")

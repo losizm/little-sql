@@ -18,34 +18,58 @@ package little.sql
 import java.io.PrintWriter
 import java.net.{ URL, URLClassLoader }
 import java.sql.{ Connection, Driver, SQLException, SQLFeatureNotSupportedException }
-import java.time.Instant.now
+import java.time.Instant.now as instant
 import java.util.Properties
 import java.util.logging.Logger
 
 import javax.sql.DataSource
 
-
 /**
- * Provides basic implementation of data source.
- *
- * @note If `driverClassPath` is empty, the driver is loaded using this
- * instance's class loader; otherwise, the driver is loaded using a class loader
- * constructed from supplied class path.
+ * Defines data source connector.
  *
  * @param url data source url
  * @param user data source user
  * @param password data source password
- * @param driverClassName fully qualified class name of JDBC driver
- * @param driverClassPath class path from which JDBC driver is loaded
+ * @param driverClassName JDBC driver class name
+ * @param driverClassLoader JDBC driver class loader
  */
-class Connector(url: String, user: String, password: String, driverClassName: String, driverClassPath: Seq[URL]) extends DataSource:
-  /** Creates connector. */
-  def this(url: String, user: String, password: String, driverClassName: String) =
-    this(url, user, password, driverClassName, Nil)
+class Connector(url: String, user: String, password: String, driverClassName: String, driverClassLoader: ClassLoader) extends DataSource:
+  /**
+   * Creates connector.
+   *
+   * @param url data source url
+   * @param user data source user
+   * @param password data source password
+   * @param driverClassName JDBC driver class name
+   * @param driverClassPath JDBC driver class path
+   *
+   * @note If `driverClassPath` is empty, the driver is loaded using
+   * `Connector`'s class loader
+   */
+  def this(url: String, user: String, password: String, driverClassName: String, driverClassPath: Seq[URL]) =
+    this(
+      url,
+      user,
+      password,
+      driverClassName,
+      driverClassPath.isEmpty match
+        case true  => classOf[Connector].getClassLoader
+        case false => URLClassLoader(driverClassPath.toArray, classOf[Connector].getClassLoader)
+    )
 
-  /** Creates connector. */
-  def this(url: String, user: String, password: String, driverClassName: String, headDriverClassPath: URL, tailDriverClassPath: URL*) =
-    this(url, user, password, driverClassName, headDriverClassPath +: tailDriverClassPath)
+  /**
+   * Creates connector.
+   *
+   * @param url data source url
+   * @param user data source user
+   * @param password data source password
+   * @param driverClassName JDBC driver class name
+   */
+  def this(url: String, user: String, password: String, driverClassName: String) =
+    this(url, user, password, driverClassName, classOf[Connector].getClassLoader)
+
+  if url == null || user == null || password == null || driverClassName == null || driverClassLoader == null then
+    throw NullPointerException()
 
   private var logWriter: PrintWriter = null
   private var loginTimeout: Int = 0
@@ -55,7 +79,7 @@ class Connector(url: String, user: String, password: String, driverClassName: St
   /**
    * Gets parent logger.
    *
-   * @throws SQLFeatureNotSupportedException &nbsp; unconditionally
+   * @throws java.sql.SQLFeatureNotSupportedException always
    */
   def getParentLogger(): Logger =
     throw SQLFeatureNotSupportedException("Parent logger not supported")
@@ -98,7 +122,7 @@ class Connector(url: String, user: String, password: String, driverClassName: St
   def isWrapperFor(kind: Class[?]): Boolean =
     kind.isInstance(this)
 
-  /** Unwraps this to specified type. */
+  /** Unwraps connector to specified type. */
   def unwrap[T](kind: Class[T]): T =
     if ! isWrapperFor(kind) then
       throw SQLException(s"Cannot unwrap to instance of $kind")
@@ -114,25 +138,16 @@ class Connector(url: String, user: String, password: String, driverClassName: St
       .append(",password=*")
       .append(",driverClassName=")
       .append(driverClassName)
-      .append(",driverClassPath=")
-      .append(driverClassPath.mkString("[", ",", "]"))
       .append(")")
       .toString
 
   private def createDriver(): Driver =
-    classLoader()
+    driverClassLoader
       .loadClass(driverClassName)
       .getConstructor()
       .newInstance()
       .asInstanceOf
 
-  private def classLoader(): ClassLoader =
-    driverClassPath.nonEmpty match
-      case true  => URLClassLoader(driverClassPath.toArray, null : ClassLoader)
-      case false => getClass.getClassLoader
-
   private def log(message: String): Unit =
-    val writer = logWriter
-
-    if writer != null then
-      writer.printf("%n%s - %s%n", now(), message)
+    Option(logWriter)
+      .foreach { _.printf("%n%s - %s%n", instant(), message) }
