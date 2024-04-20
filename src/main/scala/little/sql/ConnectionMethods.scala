@@ -41,7 +41,7 @@ import scala.util.Try
  *     // Execute SQL and handle execution result accordingly
  *     conn.execute(sql) {
  *       // If update is executed print update count
- *       case Update(count) ⇒ println(s"Update Count: \$count")
+ *       case Update(count) => println(s"Update Count: \$count")
  *
  *       // If query is executed print values of each row in result set
  *       case Query(resultSet) =>

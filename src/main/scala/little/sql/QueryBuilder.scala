@@ -30,14 +30,15 @@ import scala.util.Try
  *
  * import little.sql.{ *, given }
  *
- * implicit val conn: Connection = ???
+ * given Connection = ???
  *
+ * // Set parameters and execute query
  * QueryBuilder("select * from users where group = ? and enabled = ?")
- *   .params("staff", true) // Set input parameter values
- *   .maxRows(10) // Limit result set to 10 rows
- *   .foreach { rs => printf(s"uid=%d%n", rs.getInt("id")) } // Use implicit connection
+ *   .params("staff", true)
+ *   .maxRows(10)
+ *   .foreach { rs => printf(s"uid=%d%n", rs.getInt("id")) }
  *
- * // Same as above except use map of parameters
+ * // Same as above except use mapped parameters
  * QueryBuilder("select * from users where group = \${group} and enabled = \${enabled}")
  *   .params("group" -> "staff", "enabled" -> true)
  *   .maxRows(10)
