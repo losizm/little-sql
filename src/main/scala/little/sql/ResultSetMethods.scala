@@ -103,35 +103,35 @@ implicit class ResultSetMethods(resultSet: ResultSet) extends AnyVal:
 
   /** Gets column value as LocalDate. */
   def getLocalDate(index: Int): LocalDate =
-    GetLocalDate(resultSet, index)
+    getLocalDateByIndex(resultSet, index)
 
   /** Gets column value as LocalTime. */
   def getLocalTime(index: Int): LocalTime =
-    GetLocalTime(resultSet, index)
+    getLocalTimeByIndex(resultSet, index)
 
   /** Gets column value as LocalDateTime. */
   def getLocalDateTime(index: Int): LocalDateTime =
-    GetLocalDateTime(resultSet, index)
+    getLocalDateTimeByIndex(resultSet, index)
 
   /** Gets column value as Instant. */
   def getInstant(index: Int): Instant =
-    GetInstant(resultSet, index)
+    getInstantByIndex(resultSet, index)
 
   /** Gets column value as LocalDate. */
   def getLocalDate(label: String): LocalDate =
-    GetLocalDate(resultSet, label)
+    getLocalDateByLabel(resultSet, label)
 
   /** Gets column value as LocalTime. */
   def getLocalTime(label: String): LocalTime =
-    GetLocalTime(resultSet, label)
+    getLocalTimeByLabel(resultSet, label)
 
   /** Gets column value as LocalDateTime. */
   def getLocalDateTime(label: String): LocalDateTime =
-    GetLocalDateTime(resultSet, label)
+    getLocalDateTimeByLabel(resultSet, label)
 
   /** Gets column value as Instant. */
   def getInstant(label: String): Instant =
-    GetInstant(resultSet, label)
+    getInstantByLabel(resultSet, label)
 
   /**
    * Invokes supplied function for each remaining row of ResultSet.

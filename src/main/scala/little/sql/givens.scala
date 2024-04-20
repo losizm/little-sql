@@ -112,82 +112,98 @@ given mapToMapInParam[T](using convert: Conversion[T, InParam]): Conversion[Map[
 given tupleToTupleInParam[T](using convert: Conversion[T, InParam]): Conversion[(String, T), (String, InParam)] with
   def apply(value: (String, T)) = value._1 -> convert(value._2)
 
-/** Gets String from ResultSet. */
-given GetString: GetValue[String] with
-  def apply(rs: ResultSet, index: Int): String = rs.getString(index)
-  def apply(rs: ResultSet, label: String): String = rs.getString(label)
+/** Gets String from ResultSet using index. */
+given getStringByIndex: GetValueByIndex[String] = _.getString(_)
 
-/** Gets Boolean from ResultSet. */
-given GetBoolean: GetValue[Boolean] with
-  def apply(rs: ResultSet, index: Int): Boolean = rs.getBoolean(index)
-  def apply(rs: ResultSet, label: String): Boolean = rs.getBoolean(label)
+/** Gets String from ResultSet using label. */
+given getStringByLabel: GetValueByLabel[String] = _.getString(_)
 
-/** Gets Byte from ResultSet. */
-given GetByte: GetValue[Byte] with
-  def apply(rs: ResultSet, index: Int): Byte = rs.getByte(index)
-  def apply(rs: ResultSet, label: String): Byte = rs.getByte(label)
+/** Gets Boolean from ResultSet using index. */
+given getBooleanByIndex: GetValueByIndex[Boolean] = _.getBoolean(_)
 
-/** Gets Int from ResultSet. */
-given GetInt: GetValue[Int] with
-  def apply(rs: ResultSet, index: Int): Int = rs.getInt(index)
-  def apply(rs: ResultSet, label: String): Int = rs.getInt(label)
+/** Gets Boolean from ResultSet using label. */
+given getBooleanByLabel: GetValueByLabel[Boolean] = _.getBoolean(_)
 
-/** Gets Short from ResultSet. */
-given GetShort: GetValue[Short] with
-  def apply(rs: ResultSet, index: Int): Short = rs.getShort(index)
-  def apply(rs: ResultSet, label: String): Short = rs.getShort(label)
+/** Gets Byte from ResultSet using index. */
+given getByteByIndex: GetValueByIndex[Byte] = _.getByte(_)
 
-/** Gets Long from ResultSet. */
-given GetLong: GetValue[Long] with
-  def apply(rs: ResultSet, index: Int): Long = rs.getLong(index)
-  def apply(rs: ResultSet, label: String): Long = rs.getLong(label)
+/** Gets Byte from ResultSet using label. */
+given getByteByLabel: GetValueByLabel[Byte] = _.getByte(_)
 
-/** Gets Float from ResultSet. */
-given GetFloat: GetValue[Float] with
-  def apply(rs: ResultSet, index: Int): Float = rs.getFloat(index)
-  def apply(rs: ResultSet, label: String): Float = rs.getFloat(label)
+/** Gets Int from ResultSet using index. */
+given getIntByIndex: GetValueByIndex[Int] = _.getInt(_)
 
-/** Gets Double from ResultSet. */
-given GetDouble: GetValue[Double] with
-  def apply(rs: ResultSet, index: Int): Double = rs.getDouble(index)
-  def apply(rs: ResultSet, label: String): Double = rs.getDouble(label)
+/** Gets Int from ResultSet using label. */
+given getIntByLabel: GetValueByLabel[Int] = _.getInt(_)
 
-/** Gets BigDecimal from ResultSet. */
-given GetBigDecimal: GetValue[BigDecimal] with
-  def apply(rs: ResultSet, index: Int): BigDecimal = rs.getBigDecimal(index)
-  def apply(rs: ResultSet, label: String): BigDecimal = rs.getBigDecimal(label)
+/** Gets Short from ResultSet using index. */
+given getShortByIndex: GetValueByIndex[Short] = _.getShort(_)
 
-/** Gets Date from ResultSet. */
-given GetDate: GetValue[Date] with
-  def apply(rs: ResultSet, index: Int): Date = rs.getDate(index)
-  def apply(rs: ResultSet, label: String): Date = rs.getDate(label)
+/** Gets Short from ResultSet using label. */
+given getShortByLabel: GetValueByLabel[Short] = _.getShort(_)
 
-/** Gets Time from ResultSet. */
-given GetTime: GetValue[Time] with
-  def apply(rs: ResultSet, index: Int): Time = rs.getTime(index)
-  def apply(rs: ResultSet, label: String): Time = rs.getTime(label)
+/** Gets Long from ResultSet using index. */
+given getLongByIndex: GetValueByIndex[Long] = _.getLong(_)
 
-/** Gets Timestamp from ResultSet. */
-given GetTimestamp: GetValue[Timestamp] with
-  def apply(rs: ResultSet, index: Int): Timestamp = rs.getTimestamp(index)
-  def apply(rs: ResultSet, label: String): Timestamp = rs.getTimestamp(label)
+/** Gets Long from ResultSet using label. */
+given getLongByLabel: GetValueByLabel[Long] = _.getLong(_)
 
-/** Gets LocalDate from ResultSet. */
-given GetLocalDate: GetValue[LocalDate] with
-  def apply(rs: ResultSet, index: Int): LocalDate = dateToLocalDate(rs.getDate(index))
-  def apply(rs: ResultSet, label: String): LocalDate = dateToLocalDate(rs.getDate(label))
+/** Gets Float from ResultSet using index. */
+given getFloatByIndex: GetValueByIndex[Float] = _.getFloat(_)
 
-/** Gets LocalTime from ResultSet. */
-given GetLocalTime: GetValue[LocalTime] with
-  def apply(rs: ResultSet, index: Int): LocalTime = timeToLocalTime(rs.getTime(index))
-  def apply(rs: ResultSet, label: String): LocalTime = timeToLocalTime(rs.getTime(label))
+/** Gets Float from ResultSet using label. */
+given getFloatByLabel: GetValueByLabel[Float] = _.getFloat(_)
 
-/** Gets LocalDateTime from ResultSet. */
-given GetLocalDateTime: GetValue[LocalDateTime] with
-  def apply(rs: ResultSet, index: Int): LocalDateTime = timestampToLocalDateTime(rs.getTimestamp(index))
-  def apply(rs: ResultSet, label: String): LocalDateTime = timestampToLocalDateTime(rs.getTimestamp(label))
+/** Gets Double from ResultSet using index. */
+given getDoubleByIndex: GetValueByIndex[Double] = _.getDouble(_)
 
-/** Gets Instant from ResultSet. */
-given GetInstant: GetValue[Instant] with
-  def apply(rs: ResultSet, index: Int): Instant = timestampToInstant(rs.getTimestamp(index))
-  def apply(rs: ResultSet, label: String): Instant = timestampToInstant(rs.getTimestamp(label))
+/** Gets Double from ResultSet using label. */
+given getDoubleByLabel: GetValueByLabel[Double] = _.getDouble(_)
+
+/** Gets BigDecimal from ResultSet using index. */
+given getBigDecimalByIndex: GetValueByIndex[BigDecimal] = _.getBigDecimal(_)
+
+/** Gets BigDecimal from ResultSet using label. */
+given getBigDecimalByLabel: GetValueByLabel[BigDecimal] = _.getBigDecimal(_)
+
+/** Gets Date from ResultSet using index. */
+given getDateByIndex: GetValueByIndex[Date] = _.getDate(_)
+
+/** Gets Date from ResultSet using label. */
+given getDateByLabel: GetValueByLabel[Date] = _.getDate(_)
+
+/** Gets Time from ResultSet using index. */
+given getTimeByIndex: GetValueByIndex[Time] = _.getTime(_)
+
+/** Gets Time from ResultSet using label. */
+given getTimeByLabel: GetValueByLabel[Time] = _.getTime(_)
+
+/** Gets Timestamp from ResultSet using index. */
+given getTimestampByIndex: GetValueByIndex[Timestamp] = _.getTimestamp(_)
+
+/** Gets Timestamp from ResultSet using label. */
+given getTimestampByLabel: GetValueByLabel[Timestamp] = _.getTimestamp(_)
+
+/** Gets LocalDate from ResultSet using index. */
+given getLocalDateByIndex: GetValueByIndex[LocalDate] = (rs, index) => dateToLocalDate(rs.getDate(index))
+
+/** Gets LocalDate from ResultSet using label. */
+given getLocalDateByLabel: GetValueByLabel[LocalDate] = (rs, label) => dateToLocalDate(rs.getDate(label))
+
+/** Gets LocalTime from ResultSet using index. */
+given getLocalTimeByIndex: GetValueByIndex[LocalTime] = (rs, index) => timeToLocalTime(rs.getTime(index))
+
+/** Gets LocalTime from ResultSet using label. */
+given getLocalTimeByLabel: GetValueByLabel[LocalTime] = (rs, label) => timeToLocalTime(rs.getTime(label))
+
+/** Gets LocalDateTime from ResultSet using index. */
+given getLocalDateTimeByIndex: GetValueByIndex[LocalDateTime] = (rs, index) => timestampToLocalDateTime(rs.getTimestamp(index))
+
+/** Gets LocalDateTime from ResultSet using label. */
+given getLocalDateTimeByLabel: GetValueByLabel[LocalDateTime] = (rs, label) => timestampToLocalDateTime(rs.getTimestamp(label))
+
+/** Gets Instant from ResultSet using index. */
+given getInstantByIndex: GetValueByIndex[Instant] = (rs, index) => timestampToInstant(rs.getTimestamp(index))
+
+/** Gets Instant from ResultSet using label. */
+given getInstantByLabel: GetValueByLabel[Instant] = (rs, label) => timestampToInstant(rs.getTimestamp(label))
